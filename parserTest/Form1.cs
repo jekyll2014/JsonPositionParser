@@ -9,7 +9,7 @@ namespace parserTest
 {
     public partial class Form1 : Form
     {
-        private List<JsonPathParser.JsonProperty> _pathList;
+        private List<JsonPathParser.ParsedProperty> _pathList;
 
         public Form1()
         {
@@ -53,7 +53,7 @@ namespace parserTest
             //textBox.Text = JsonIO.BeautifyJson(File.ReadAllText(openFileDialog.FileName), true);
             textBox.Text = File.ReadAllText(openFileDialog.FileName).Replace(' ', ' ');
             Text = openFileDialog.FileName;
-            _pathList = new List<JsonPathParser.JsonProperty>();
+            _pathList = new List<JsonPathParser.ParsedProperty>();
             _pathList = JsonPathParser.ParseJsonPathsStr(textBox.Text);
             listBox1.Items.AddRange(_pathList.Select(n => n.Path).ToArray());
         }
@@ -80,7 +80,7 @@ namespace parserTest
                     }
                     // not failed but have incorrect positions
                     var item1 = pathIndex.Where(n => n.EndPosition < 0 || n.StartPosition < 0);
-                    var jsonProperties = item1 as JsonPathParser.JsonProperty[] ?? item1.ToArray();
+                    var jsonProperties = item1 as JsonPathParser.ParsedProperty[] ?? item1.ToArray();
                     if (jsonProperties.Any())
                     {
                         File.AppendAllText("_bad_file.txt", file + Environment.NewLine);
@@ -98,7 +98,7 @@ namespace parserTest
                         .GroupBy(n => n.Path)
                         .Where(n => n.Count() > 1);
 
-                    var enumerables = item2 as IGrouping<string, JsonPathParser.JsonProperty>[] ?? item2.ToArray();
+                    var enumerables = item2 as IGrouping<string, JsonPathParser.ParsedProperty>[] ?? item2.ToArray();
                     if (enumerables.Any())
                     {
                         File.AppendAllText("_dup_file.txt", file + Environment.NewLine);

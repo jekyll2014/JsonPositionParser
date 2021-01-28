@@ -19,26 +19,35 @@ namespace parserTest
             Error
         }
 
-        public class JsonProperty
+        public class ParsedProperty
         {
-            public int StartPosition;
-            public int EndPosition;
+            public int StartPosition = -1;
+            public int EndPosition = -1;
             public string Path = "";
             public string Name = "";
             public string Value = "";
             public PropertyType Type = PropertyType.Empty;
+            public int Length
+            {
+                get
+                {
+                    if (StartPosition == -1 || EndPosition == -1) return 0;
+
+                    return EndPosition - StartPosition + 1;
+                }
+            }
         }
 
         private static string _jsonText = "";
-        private static List<JsonProperty> _pathIndex = new List<JsonProperty>();
+        private static List<ParsedProperty> _pathIndex = new List<ParsedProperty>();
 
         private static readonly char[] EscapeChars = { '\"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u' };
         private static readonly char[] TokenOrNumber = "-0123456789.truefalsenull".ToCharArray().ToArray();
 
-        private static bool _skipComents;
-        private static bool _errorFound;
+        private static bool _skipComents = false;
+        private static bool _errorFound = false;
 
-        public static List<JsonProperty> ParseJsonPathsStr(string json, out int pos, out bool errorFound, bool skipComments = false)
+        public static List<ParsedProperty> ParseJsonPathsStr(string json, out int pos, out bool errorFound, bool skipComments = false)
         {
             _skipComents = skipComments;
             _jsonText = json;
@@ -52,7 +61,7 @@ namespace parserTest
             }
 
             const string currentPath = "";
-            _pathIndex = new List<JsonProperty>();
+            _pathIndex = new List<ParsedProperty>();
             while (!_errorFound && pos < _jsonText.Length)
             {
                 pos = FindStartOfNextToken(pos, out var foundObjectType);
@@ -81,7 +90,7 @@ namespace parserTest
             return _pathIndex;
         }
 
-        public static List<JsonProperty> ParseJsonPathsStr(string json, bool skipComments = false)
+        public static List<ParsedProperty> ParseJsonPathsStr(string json, bool skipComments = false)
         {
             ParseJsonPathsStr(json, out int _, out bool _, skipComments);
 
@@ -139,7 +148,7 @@ namespace parserTest
 
         private static int GetComment(int pos, string currentPath)
         {
-            var newElement = new JsonProperty
+            var newElement = new ParsedProperty
             {
                 Type = PropertyType.Comment,
                 StartPosition = pos,
@@ -227,7 +236,7 @@ namespace parserTest
             var incorrectChars = new List<char> { '\r', '\n' };
             pos++;
 
-            var newElement = new JsonProperty
+            var newElement = new ParsedProperty
             {
                 StartPosition = pos - 1
             };
@@ -356,7 +365,7 @@ namespace parserTest
 
         private static int GetTokenOrNumber(int pos, string currentPath)
         {
-            var newElement = new JsonProperty
+            var newElement = new ParsedProperty
             {
                 StartPosition = pos
             };
