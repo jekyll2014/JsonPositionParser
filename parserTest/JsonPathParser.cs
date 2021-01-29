@@ -124,22 +124,22 @@ namespace parserTest
                         foundObjectType = PropertyType.EndOfArray;
                         return pos;
                     default:
-                    {
-                        if (tokenOrNumber.Contains(currentChar))
                         {
-                            foundObjectType = PropertyType.TokenOrNumber;
-                            return pos;
-                        }
+                            if (tokenOrNumber.Contains(currentChar))
+                            {
+                                foundObjectType = PropertyType.TokenOrNumber;
+                                return pos;
+                            }
 
-                        if (!allowedChars.Contains(currentChar))
-                        {
-                            foundObjectType = PropertyType.Error;
-                            _errorFound = true;
-                            return pos;
-                        }
+                            if (!allowedChars.Contains(currentChar))
+                            {
+                                foundObjectType = PropertyType.Error;
+                                _errorFound = true;
+                                return pos;
+                            }
 
-                        break;
-                    }
+                            break;
+                        }
                 }
             }
 
@@ -157,6 +157,7 @@ namespace parserTest
             };
 
             pos++;
+
             if (pos >= _jsonText.Length)
             {
                 _errorFound = true;
@@ -167,64 +168,64 @@ namespace parserTest
             {
                 //single line comment
                 case '/':
-                {
-                    pos++;
-                    if (pos >= _jsonText.Length)
                     {
-                        _errorFound = true;
-                        return pos;
-                    }
-
-                    for (; pos < _jsonText.Length; pos++)
-                        if (_jsonText[pos] == '\r' || _jsonText[pos] == '\n') //end of comment
+                        pos++;
+                        if (pos >= _jsonText.Length)
                         {
-                            pos--;
-                            newElement.EndPosition = pos;
-                            newElement.Value = _jsonText.Substring(newElement.StartPosition,
-                                newElement.EndPosition - newElement.StartPosition + 1);
-                            if (!_skipComents)
-                                _pathIndex.Add(newElement);
+                            _errorFound = true;
                             return pos;
                         }
 
-                    return pos;
-                }
-                //multi line comment
-                case '*':
-                {
-                    pos++;
-                    if (pos >= _jsonText.Length)
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
-
-                    for (; pos < _jsonText.Length; pos++)
-                        if (_jsonText[pos] == '*') // possible end of comment
-                        {
-                            pos++;
-                            if (pos >= _jsonText.Length)
+                        for (; pos < _jsonText.Length; pos++)
+                            if (_jsonText[pos] == '\r' || _jsonText[pos] == '\n') //end of comment
                             {
-                                _errorFound = true;
-                                return pos;
-                            }
-
-                            if (_jsonText[pos] == '/')
-                            {
+                                pos--;
                                 newElement.EndPosition = pos;
-                                newElement.Value = _jsonText.Substring(
-                                    newElement.StartPosition,
+                                newElement.Value = _jsonText.Substring(newElement.StartPosition,
                                     newElement.EndPosition - newElement.StartPosition + 1);
                                 if (!_skipComents)
                                     _pathIndex.Add(newElement);
                                 return pos;
                             }
 
-                            pos--;
+                        return pos;
+                    }
+                //multi line comment
+                case '*':
+                    {
+                        pos++;
+                        if (pos >= _jsonText.Length)
+                        {
+                            _errorFound = true;
+                            return pos;
                         }
 
-                    break;
-                }
+                        for (; pos < _jsonText.Length; pos++)
+                            if (_jsonText[pos] == '*') // possible end of comment
+                            {
+                                pos++;
+                                if (pos >= _jsonText.Length)
+                                {
+                                    _errorFound = true;
+                                    return pos;
+                                }
+
+                                if (_jsonText[pos] == '/')
+                                {
+                                    newElement.EndPosition = pos;
+                                    newElement.Value = _jsonText.Substring(
+                                        newElement.StartPosition,
+                                        newElement.EndPosition - newElement.StartPosition + 1);
+                                    if (!_skipComents)
+                                        _pathIndex.Add(newElement);
+                                    return pos;
+                                }
+
+                                pos--;
+                            }
+
+                        break;
+                    }
             }
 
             _errorFound = true;
@@ -234,12 +235,13 @@ namespace parserTest
         private static int GetPropertyName(int pos, string currentPath)
         {
             var incorrectChars = new List<char> { '\r', '\n' };
-            pos++;
 
             var newElement = new ParsedProperty
             {
-                StartPosition = pos - 1
+                StartPosition = pos
             };
+
+            pos++;
 
             for (; pos < _jsonText.Length; pos++) // searching for property name end
             {
@@ -369,6 +371,7 @@ namespace parserTest
             {
                 StartPosition = pos
             };
+
             var endingChars = new List<char> { ',', ']', '\r', '\n', '/' };
 
             for (; pos < _jsonText.Length; pos++) // searching for property name end
@@ -461,44 +464,44 @@ namespace parserTest
                         break;
                     //it's a start of value string 
                     case '\"':
-                    {
-                        pos++;
-                        var incorrectChars = new List<char> { '\r', '\n' }; // to be added
+                        {
+                            pos++;
+                            var incorrectChars = new List<char> { '\r', '\n' }; // to be added
 
-                        for (; pos < _jsonText.Length; pos++)
-                            if (_jsonText[pos] == '\\') //skip escape chars
-                            {
-                                pos++;
-                                if (pos >= _jsonText.Length)
+                            for (; pos < _jsonText.Length; pos++)
+                                if (_jsonText[pos] == '\\') //skip escape chars
+                                {
+                                    pos++;
+                                    if (pos >= _jsonText.Length)
+                                    {
+                                        _errorFound = true;
+                                        return pos;
+                                    }
+
+                                    if (EscapeChars.Contains(_jsonText[pos])) // if \u0000
+                                    {
+                                        if (_jsonText[pos] == 'u')
+                                            pos += 4;
+                                    }
+                                    else
+                                    {
+                                        _errorFound = true;
+                                        return pos;
+                                    }
+                                }
+                                else if (_jsonText[pos] == '\"')
+                                {
+                                    return pos;
+                                }
+                                else if (incorrectChars.Contains(_jsonText[pos])) // check restricted chars
                                 {
                                     _errorFound = true;
                                     return pos;
                                 }
 
-                                if (EscapeChars.Contains(_jsonText[pos])) // if \u0000
-                                {
-                                    if (_jsonText[pos] == 'u')
-                                        pos += 4;
-                                }
-                                else
-                                {
-                                    _errorFound = true;
-                                    return pos;
-                                }
-                            }
-                            else if (_jsonText[pos] == '\"')
-                            {
-                                return pos;
-                            }
-                            else if (incorrectChars.Contains(_jsonText[pos])) // check restricted chars
-                            {
-                                _errorFound = true;
-                                return pos;
-                            }
-
-                        _errorFound = true;
-                        return pos;
-                    }
+                            _errorFound = true;
+                            return pos;
+                        }
                     default:
                         if (!allowedChars.Contains(_jsonText[pos])) // it's a property non-string value
                         {
@@ -575,7 +578,18 @@ namespace parserTest
 
         private static int GetObject(int pos, string currentPath)
         {
+            var newElement = new ParsedProperty
+            {
+                StartPosition = pos,
+                Type = PropertyType.Object,
+                Value = "",
+                Name = "",
+                Path = currentPath
+            };
+            _pathIndex.Add(newElement);
+
             pos++;
+
             for (; pos < _jsonText.Length; pos++)
             {
                 if (_errorFound)
@@ -601,6 +615,7 @@ namespace parserTest
                         pos = GetObject(pos, currentPath);
                         break;
                     case PropertyType.EndOfObject:
+                        newElement.EndPosition = pos;
                         return pos;
                     default:
                         _errorFound = true;

@@ -55,7 +55,7 @@ namespace parserTest
             Text = openFileDialog.FileName;
             _pathList = new List<JsonPathParser.ParsedProperty>();
             _pathList = JsonPathParser.ParseJsonPathsStr(textBox.Text);
-            listBox1.Items.AddRange(_pathList.Select(n => n.Path).ToArray());
+            listBox1.Items.AddRange(_pathList.Select(n => n.Path + " (" + n.Type + ")").ToArray());
         }
 
         private void Button_dir_Click(object sender, EventArgs e)
