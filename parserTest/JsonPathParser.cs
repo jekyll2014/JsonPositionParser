@@ -545,6 +545,7 @@ namespace parserTest
                 {
                     case PropertyType.Comment:
                         pos = GetComment(pos, currentPath + "[" + arrayIndex + "]");
+                        arrayIndex++;
                         break;
                     case PropertyType.Property:
                         pos = GetPropertyName(pos, currentPath + "[" + arrayIndex + "]");
