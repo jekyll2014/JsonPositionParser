@@ -27,6 +27,7 @@ namespace parserTest
             public string Name = "";
             public string Value = "";
             public PropertyType Type = PropertyType.Empty;
+
             public int Length
             {
                 get
@@ -45,12 +46,12 @@ namespace parserTest
         private static readonly char[] EscapeChars = { '\"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u' };
         private static readonly char[] TokenOrNumber = "-0123456789.truefalsenull".ToCharArray().ToArray();
 
-        private static bool _skipComents = false;
-        private static bool _errorFound = false;
+        private static bool _skipComments;
+        private static bool _errorFound;
 
         public static List<ParsedProperty> ParseJsonPathsStr(string json, out int pos, out bool errorFound, bool skipComments = false)
         {
-            _skipComents = skipComments;
+            _skipComments = skipComments;
             _jsonText = json;
             pos = 0;
             _errorFound = false;
@@ -93,7 +94,7 @@ namespace parserTest
 
         public static List<ParsedProperty> ParseJsonPathsStr(string json, bool skipComments = false)
         {
-            ParseJsonPathsStr(json, out int _, out bool _, skipComments);
+            ParseJsonPathsStr(json, out var _, out var _, skipComments);
 
             return _pathIndex;
         }
@@ -156,8 +157,10 @@ namespace parserTest
                 Path = currentPath,
                 Name = ""
             };
-            if (!_skipComents)
+            if (!_skipComments)
+            {
                 _pathIndex.Add(newElement);
+            }
 
             pos++;
 
@@ -180,6 +183,7 @@ namespace parserTest
                     }
 
                     for (; pos < _jsonText.Length; pos++)
+                    {
                         if (_jsonText[pos] == '\r' || _jsonText[pos] == '\n') //end of comment
                         {
                             pos--;
@@ -188,6 +192,7 @@ namespace parserTest
                                 newElement.EndPosition - newElement.StartPosition + 1);
                             return pos;
                         }
+                    }
 
                     return pos;
                 }
@@ -202,6 +207,7 @@ namespace parserTest
                     }
 
                     for (; pos < _jsonText.Length; pos++)
+                    {
                         if (_jsonText[pos] == '*') // possible end of comment
                         {
                             pos++;
@@ -222,6 +228,7 @@ namespace parserTest
 
                             pos--;
                         }
+                    }
 
                     break;
                 }
@@ -310,9 +317,13 @@ namespace parserTest
                     }
 
                     if (string.IsNullOrEmpty(currentPath))
+                    {
                         currentPath = newElement.Name;
+                    }
                     else
+                    {
                         currentPath += "." + newElement.Name;
+                    }
 
                     newElement.Path = currentPath;
                     switch (_jsonText[pos])
@@ -392,7 +403,6 @@ namespace parserTest
                     newElement.EndPosition = pos;
                     newElement.Path = currentPath;
 
-
                     return pos;
                 }
 
@@ -409,17 +419,14 @@ namespace parserTest
 
         private static bool IsNumeric(string str)
         {
-            foreach (var c in str)
-                if ((c < '0' || c > '9') && c != '.' && c != '-')
-                    return false;
-
-            return true;
+            return str.All(c => (c >= '0' && c <= '9') || c == '.' || c == '-');
         }
 
         private static int GetPropertyDivider(int pos, string currentPath)
         {
             var allowedChars = new List<char> { ' ', '\t', '\r', '\n' };
             for (; pos < _jsonText.Length; pos++)
+            {
                 switch (_jsonText[pos])
                 {
                     case ':':
@@ -437,6 +444,7 @@ namespace parserTest
                         }
                         break;
                 }
+            }
 
             _errorFound = true;
             return pos;
@@ -446,6 +454,7 @@ namespace parserTest
         {
             var allowedChars = new[] { ' ', '\t', '\r', '\n' };
             for (; pos < _jsonText.Length; pos++)
+            {
                 switch (_jsonText[pos])
                 {
                     case '[':
@@ -463,6 +472,7 @@ namespace parserTest
                         var incorrectChars = new List<char> { '\r', '\n' }; // to be added
 
                         for (; pos < _jsonText.Length; pos++)
+                        {
                             if (_jsonText[pos] == '\\') //skip escape chars
                             {
                                 pos++;
@@ -492,6 +502,7 @@ namespace parserTest
                                 _errorFound = true;
                                 return pos;
                             }
+                        }
 
                         _errorFound = true;
                         return pos;
@@ -517,9 +528,9 @@ namespace parserTest
                                 }
                             }
                         }
-
                         break;
                 }
+            }
 
             _errorFound = true;
             return pos;
