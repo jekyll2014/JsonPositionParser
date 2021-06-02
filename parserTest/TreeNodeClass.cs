@@ -35,6 +35,19 @@ namespace parserTest
             return values.Select(AddChild).ToArray();
         }
 
+        //var five = myTree.AddChild(5);
+        //myTree.InsertChild(five, 55);
+        public TreeNode<T> InsertChild(TreeNode<T> parent, T value)
+        {
+            var node = new TreeNode<T>(value)
+            {
+                Parent = parent
+            };
+
+            parent._children.Add(node);
+            return node;
+        }
+
         public bool RemoveChild(TreeNode<T> node)
         {
             return _children.Remove(node);
@@ -50,19 +63,6 @@ namespace parserTest
         public IEnumerable<T> Flatten()
         {
             return new[] { Value }.Concat(_children.SelectMany(x => x.Flatten()));
-        }
-
-        //var five = myTree.AddChild(5);
-        //myTree.InsertChild(five, 55);
-        public TreeNode<T> InsertChild(TreeNode<T> parent, T value)
-        {
-            var node = new TreeNode<T>(value)
-            {
-                Parent = parent
-            };
-
-            parent._children.Add(node);
-            return node;
         }
 
     }
