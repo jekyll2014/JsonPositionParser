@@ -56,7 +56,7 @@ namespace parserTest
         private static string _jsonText = "";
         private static string _rootName = "root";
         private static char _pathDivider = '.';
-        private static bool _saveAllValues = false;
+        private static bool _saveAllValues;
         private static List<ParsedProperty> _pathIndex = new List<ParsedProperty>();
 
         private static readonly char[] EscapeChars = { '\"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u' };
@@ -696,7 +696,7 @@ namespace parserTest
             return str.All(c => (c >= '0' && c <= '9') || c == '.' || c == '-');
         }
 
-        public static ValueType GetVariableType(string text)
+        private static ValueType GetVariableType(string text)
         {
             var type = ValueType.Unknown;
 

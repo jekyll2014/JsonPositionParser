@@ -8,7 +8,7 @@ namespace parserTest
 {
     public partial class Form1 : Form
     {
-        private const string rootName = "<root>";
+        private const string RootName = "<root>";
         private JsonPathParser.ParsedProperty[] _pathList;
 
         public Form1()
@@ -76,10 +76,10 @@ namespace parserTest
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Exception: " + ex.ToString());
+                MessageBox.Show("Exception: " + ex);
             }
 
-            if (pos < jsonText.Length)
+            if (errorFound)
             {
                 MessageBox.Show("Error parsing file at position: " + pos.ToString());
                 textBox.SelectionStart = pos;
@@ -89,79 +89,76 @@ namespace parserTest
             }
 
             listBox1.Items.AddRange(_pathList.Select(n => n.Path).ToArray());
-
             var rootNode = JsonPathParser.ConvertPathListToTree(_pathList);
-
             treeView1.Nodes.Add(rootNode);
         }
 
         private void Button_dir_Click(object sender, EventArgs e)
         {
-            if (folderBrowserDialog1.ShowDialog() == DialogResult.OK &&
-                !string.IsNullOrEmpty(folderBrowserDialog1.SelectedPath))
+            if (folderBrowserDialog1.ShowDialog() != DialogResult.OK ||
+                string.IsNullOrEmpty(folderBrowserDialog1.SelectedPath)) return;
+            
+            var filesList = Directory.GetFiles(folderBrowserDialog1.SelectedPath,
+                "*.jsonc",
+                SearchOption.AllDirectories);
+
+            foreach (var file in filesList)
             {
-                var filesList = Directory.GetFiles(folderBrowserDialog1.SelectedPath,
-                    "*.jsonc",
-                    SearchOption.AllDirectories);
+                var text = File.ReadAllText(file).Replace(' ', ' '); // replace &nbsp char with space
 
-                foreach (var file in filesList)
+                var pos = -1;
+                var errorFound = false;
+
+                try
                 {
-                    var text = File.ReadAllText(file).Replace(' ', ' '); // replace &nbsp char with space
+                    _pathList = JsonPathParser.ParseJsonToPathList(text, out pos, out errorFound).ToArray();
+                }
+                catch (Exception)
+                {
+                    File.AppendAllText("_bad_file.txt",
+                        file + Environment.NewLine + pos + Environment.NewLine + Environment.NewLine);
+                }
 
-                    var pos = -1;
-                    var errorFound = false;
-
-                    try
-                    {
-                        _pathList = JsonPathParser.ParseJsonToPathList(text, out pos, out errorFound).ToArray();
-                    }
-                    catch (Exception ex)
+                // parsing failed
+                if (errorFound)
+                {
+                    File.AppendAllText("_bad_file.txt",
+                        file + Environment.NewLine + pos + Environment.NewLine + Environment.NewLine);
+                }
+                // not failed but have incorrect positions
+                var item1 = _pathList.Where(n => n.EndPosition < 0 || n.StartPosition < 0).ToArray();
+                var jsonProperties = item1;
+                if (jsonProperties.Any())
+                {
+                    File.AppendAllText("_bad_file.txt", file + Environment.NewLine);
+                    foreach (var item in jsonProperties)
                     {
                         File.AppendAllText("_bad_file.txt",
-          file + Environment.NewLine + pos + Environment.NewLine + Environment.NewLine);
+                            item.Path + " = " + item.Value + Environment.NewLine);
                     }
+                    File.AppendAllText("_bad_file.txt", Environment.NewLine);
+                }
 
-                    // parsing failed
-                    if (errorFound)
+                // find duplicate json paths
+                var item2 = _pathList.Where(n =>
+                        n.PropertyType != JsonPathParser.PropertyType.Comment)
+                    .ToArray()
+                    .GroupBy(n => n.Path)
+                    .Where(n => n.Count() > 1).ToArray();
+
+                var enumerates = item2;
+                if (enumerates.Any())
+                {
+                    File.AppendAllText("_dup_file.txt", file + Environment.NewLine);
+                    foreach (var item3 in enumerates)
                     {
-                        File.AppendAllText("_bad_file.txt",
-                              file + Environment.NewLine + pos + Environment.NewLine + Environment.NewLine);
-                    }
-                    // not failed but have incorrect positions
-                    var item1 = _pathList.Where(n => n.EndPosition < 0 || n.StartPosition < 0).ToArray();
-                    var jsonProperties = item1;
-                    if (jsonProperties.Any())
-                    {
-                        File.AppendAllText("_bad_file.txt", file + Environment.NewLine);
-                        foreach (var item in jsonProperties)
+                        foreach (var item4 in item3)
                         {
-                            File.AppendAllText("_bad_file.txt",
-                                item.Path + " = " + item.Value + Environment.NewLine);
+                            File.AppendAllText("_dup_file.txt", item4.Path
+                                                                + " = " + item4.Value + Environment.NewLine);
                         }
-                        File.AppendAllText("_bad_file.txt", Environment.NewLine);
                     }
-
-                    // find duplicate json paths
-                    var item2 = _pathList.Where(n =>
-                    n.PropertyType != JsonPathParser.PropertyType.Comment)
-                        .ToArray()
-                        .GroupBy(n => n.Path)
-                        .Where(n => n.Count() > 1).ToArray();
-
-                    var enumerates = item2;
-                    if (enumerates.Any())
-                    {
-                        File.AppendAllText("_dup_file.txt", file + Environment.NewLine);
-                        foreach (var item3 in enumerates)
-                        {
-                            foreach (var item4 in item3)
-                            {
-                                File.AppendAllText("_dup_file.txt", item4.Path
-                                  + " = " + item4.Value + Environment.NewLine);
-                            }
-                        }
-                        File.AppendAllText("_dup_file.txt", Environment.NewLine);
-                    }
+                    File.AppendAllText("_dup_file.txt", Environment.NewLine);
                 }
             }
         }
@@ -171,7 +168,7 @@ namespace parserTest
             var path = e.Node.FullPath;
             if (path.StartsWith("\\"))
                 path = path.Substring(1);
-            var item = _pathList.FirstOrDefault(n => n.Path == path.Replace('\\', '.').Replace(rootName, ""));
+            var item = _pathList.FirstOrDefault(n => n.Path == path.Replace('\\', '.').Replace(RootName, ""));
             if (item == null)
                 return;
 
