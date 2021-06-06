@@ -2,51 +2,22 @@
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
+
+using JsonPathParserLib;
 
 namespace parserTest
 {
     public partial class Form1 : Form
     {
         private const string RootName = "<root>";
-        private JsonPathParser.ParsedProperty[] _pathList;
+        private char PathDivider = '.';
 
         public Form1()
         {
             InitializeComponent();
-        }
-
-        private void ListBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (listBox1.SelectedItem == null)
-                return;
-
-            //var item = pathList.Where(n => n.Path == listBox1.SelectedItem.ToString());
-            var item = _pathList[listBox1.SelectedIndex];
-
-            if (item == null)
-                return;
-
-            var startPos = item.StartPosition;
-            var endPos = item.EndPosition;
-
-            textBox.SelectionLength = 0;
-            if (startPos < 0 || startPos >= textBox.TextLength)
-                return;
-            if (endPos < 0 || endPos >= textBox.TextLength)
-                return;
-
-            textBox_name.Text = item.Name;
-            textBox_value.Text = item.Value;
-            textBox_propertyType.Text = item.PropertyType.ToString();
-            textBox_valueType.Text = item.ValueType.ToString();
-            textBox_startPos.Text = item.StartPosition.ToString();
-            textBox_endPos.Text = item.EndPosition.ToString();
-
-            textBox.SelectionStart = startPos;
-            textBox.SelectionLength = endPos - startPos + 1;
-            textBox.ScrollToCaret();
-            listBox1.Focus();
+            //listBox1.DisplayMember = "Path";
         }
 
         private void Button_open_Click(object sender, EventArgs e)
@@ -69,10 +40,20 @@ namespace parserTest
             Text = openFileDialog.FileName;
             var pos = -1;
             var errorFound = false;
+            PathDivider = treeView1.PathSeparator.FirstOrDefault();
+            ParsedProperty[] pathList = null;
+
+            var parcer = new JsonPathParser
+            {
+                TrimComplexValues = false,
+                SaveAllValues = true,
+                RootName = RootName,
+                JsonPathDivider = PathDivider
+            };
 
             try
             {
-                _pathList = JsonPathParser.ParseJsonToPathList(jsonText, out pos, out errorFound).ToArray();
+                pathList = parcer.ParseJsonToPathList(jsonText, out pos, out errorFound).ToArray();
             }
             catch (Exception ex)
             {
@@ -88,16 +69,18 @@ namespace parserTest
                 listBox1.Focus();
             }
 
-            listBox1.Items.AddRange(_pathList.Select(n => n.Path).ToArray());
-            var rootNode = JsonPathParser.ConvertPathListToTree(_pathList);
-            treeView1.Nodes.Add(rootNode);
+            listBox1.DataSource = pathList;
+
+            var rootNodes = ConvertPathListToTree(pathList);
+            treeView1.Nodes.AddRange(rootNodes);
         }
 
         private void Button_dir_Click(object sender, EventArgs e)
         {
             if (folderBrowserDialog1.ShowDialog() != DialogResult.OK ||
-                string.IsNullOrEmpty(folderBrowserDialog1.SelectedPath)) return;
-            
+                string.IsNullOrEmpty(folderBrowserDialog1.SelectedPath))
+                return;
+
             var filesList = Directory.GetFiles(folderBrowserDialog1.SelectedPath,
                 "*.jsonc",
                 SearchOption.AllDirectories);
@@ -108,10 +91,19 @@ namespace parserTest
 
                 var pos = -1;
                 var errorFound = false;
+                ParsedProperty[] pathList = null;
+
+                var parcer = new JsonPathParser
+                {
+                    TrimComplexValues = false,
+                    SaveAllValues = true,
+                    RootName = RootName,
+                    JsonPathDivider = PathDivider
+                };
 
                 try
                 {
-                    _pathList = JsonPathParser.ParseJsonToPathList(text, out pos, out errorFound).ToArray();
+                    pathList = parcer.ParseJsonToPathList(text, out pos, out errorFound).ToArray();
                 }
                 catch (Exception)
                 {
@@ -126,7 +118,7 @@ namespace parserTest
                         file + Environment.NewLine + pos + Environment.NewLine + Environment.NewLine);
                 }
                 // not failed but have incorrect positions
-                var item1 = _pathList.Where(n => n.EndPosition < 0 || n.StartPosition < 0).ToArray();
+                var item1 = pathList.Where(n => n.EndPosition < 0 || n.StartPosition < 0).ToArray();
                 var jsonProperties = item1;
                 if (jsonProperties.Any())
                 {
@@ -140,8 +132,8 @@ namespace parserTest
                 }
 
                 // find duplicate json paths
-                var item2 = _pathList.Where(n =>
-                        n.PropertyType != JsonPathParser.PropertyType.Comment)
+                var item2 = pathList.Where(n =>
+                        n.PropertyType != PropertyType.Comment)
                     .ToArray()
                     .GroupBy(n => n.Path)
                     .Where(n => n.Count() > 1).ToArray();
@@ -165,16 +157,58 @@ namespace parserTest
 
         private void TreeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            var path = e.Node.FullPath;
-            if (path.StartsWith("\\"))
-                path = path.Substring(1);
-            var item = _pathList.FirstOrDefault(n => n.Path == path.Replace('\\', '.').Replace(RootName, ""));
-            if (item == null)
+            if (!(e.Node.Tag is ParsedProperty item))
+            {
+                textBox_name.Text = "";
+                textBox_value.Text = "";
+                textBox_propertyType.Text = "";
+                textBox_valueType.Text = "";
+                textBox_startPos.Text = "";
+                textBox_endPos.Text = "";
+                textBox.SelectionLength = 0;
                 return;
+            }
 
             var startPos = item.StartPosition;
             var endPos = item.EndPosition;
 
+            if (startPos < 0 || startPos >= textBox.TextLength)
+                return;
+
+            if (endPos < 0 || endPos >= textBox.TextLength)
+                return;
+
+            textBox_name.Text = item.Name;
+            textBox_value.Text = item.Value;
+            textBox_propertyType.Text = item.PropertyType.ToString();
+            textBox_valueType.Text = item.ValueType.ToString();
+            textBox_startPos.Text = item.StartPosition.ToString();
+            textBox_endPos.Text = item.EndPosition.ToString();
+
+            textBox.SelectionStart = startPos;
+            textBox.SelectionLength = endPos - startPos + 1;
+            textBox.ScrollToCaret();
+            listBox1.Focus();
+        }
+
+        private void ListBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!(listBox1.SelectedItem is ParsedProperty item))
+            {
+                textBox_name.Text = "";
+                textBox_value.Text = "";
+                textBox_propertyType.Text = "";
+                textBox_valueType.Text = "";
+                textBox_startPos.Text = "";
+                textBox_endPos.Text = "";
+                textBox.SelectionLength = 0;
+                return;
+            }
+
+            var startPos = item.StartPosition;
+            var endPos = item.EndPosition;
+
+            textBox.SelectionLength = 0;
             if (startPos < 0 || startPos >= textBox.TextLength)
                 return;
             if (endPos < 0 || endPos >= textBox.TextLength)
@@ -191,6 +225,49 @@ namespace parserTest
             textBox.SelectionLength = endPos - startPos + 1;
             textBox.ScrollToCaret();
             listBox1.Focus();
+        }
+
+        public TreeNode[] ConvertPathListToTree(ParsedProperty[] pathList)
+        {
+            TreeNode node = null;
+
+            foreach (var propertyItem in pathList)
+            {
+                var itemPath = propertyItem.Path;
+
+                var tmpNode = node;
+                var tmpPath = new StringBuilder();
+                foreach (var token in itemPath.Split(new char[] { PathDivider }))
+                {
+                    tmpPath.Append(token + PathDivider.ToString());
+
+                    if (tmpNode == null)
+                    {
+                        node = new TreeNode(token)
+                        {
+                            Tag = propertyItem,
+                            Name = tmpPath.ToString()
+                        };
+
+                        tmpNode = node;
+                    }
+
+                    if (!tmpNode.Nodes.ContainsKey(tmpPath.ToString()))
+                    {
+                        var newNode = new TreeNode(token)
+                        {
+                            Tag = propertyItem,
+                            Name = tmpPath.ToString()
+                        };
+
+                        tmpNode.Nodes.Add(newNode);
+                    }
+
+                    tmpNode = tmpNode.Nodes[tmpPath.ToString()];
+                }
+            }
+
+            return node.Nodes.OfType<TreeNode>().ToArray();
         }
     }
 }
