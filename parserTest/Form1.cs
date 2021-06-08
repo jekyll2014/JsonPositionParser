@@ -46,7 +46,7 @@ namespace parserTest
             var parcer = new JsonPathParser
             {
                 TrimComplexValues = false,
-                SaveAllValues = true,
+                SaveComplexValues = true,
                 RootName = RootName,
                 JsonPathDivider = PathDivider
             };
@@ -96,7 +96,7 @@ namespace parserTest
                 var parcer = new JsonPathParser
                 {
                     TrimComplexValues = false,
-                    SaveAllValues = true,
+                    SaveComplexValues = true,
                     RootName = RootName,
                     JsonPathDivider = PathDivider
                 };
