@@ -133,7 +133,7 @@ namespace parserTest
 
                 // find duplicate json paths
                 var item2 = pathList.Where(n =>
-                        n.PropertyType != PropertyType.Comment)
+                        n.JsonPropertyType != JsonPropertyTypes.Comment)
                     .ToArray()
                     .GroupBy(n => n.Path)
                     .Where(n => n.Count() > 1).ToArray();
@@ -180,7 +180,7 @@ namespace parserTest
 
             textBox_name.Text = item.Name;
             textBox_value.Text = item.Value;
-            textBox_propertyType.Text = item.PropertyType.ToString();
+            textBox_propertyType.Text = item.JsonPropertyType.ToString();
             textBox_valueType.Text = item.ValueType.ToString();
             textBox_startPos.Text = item.StartPosition.ToString();
             textBox_endPos.Text = item.EndPosition.ToString();
@@ -216,7 +216,7 @@ namespace parserTest
 
             textBox_name.Text = item.Name;
             textBox_value.Text = item.Value;
-            textBox_propertyType.Text = item.PropertyType.ToString();
+            textBox_propertyType.Text = item.JsonPropertyType.ToString();
             textBox_valueType.Text = item.ValueType.ToString();
             textBox_startPos.Text = item.StartPosition.ToString();
             textBox_endPos.Text = item.EndPosition.ToString();
