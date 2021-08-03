@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -13,6 +15,7 @@ namespace parserTest
     {
         private const string RootName = "<root>";
         private char _pathDivider = '.';
+        private JsonPathParser _parser;
 
         public Form1()
         {
@@ -44,7 +47,7 @@ namespace parserTest
             _pathDivider = treeView1.PathSeparator.FirstOrDefault();
             ParsedProperty[] pathList = null;
 
-            var parser = new JsonPathParser
+            _parser = new JsonPathParser
             {
                 TrimComplexValues = false,
                 SaveComplexValues = true,
@@ -54,7 +57,7 @@ namespace parserTest
 
             try
             {
-                pathList = parser.ParseJsonToPathList(jsonText, out pos, out errorFound).ToArray();
+                pathList = _parser.ParseJsonToPathList(jsonText, out pos, out errorFound).ToArray();
             }
             catch (Exception ex)
             {
@@ -63,7 +66,7 @@ namespace parserTest
 
             if (errorFound)
             {
-                MessageBox.Show("Error parsing file at position: " + pos.ToString());
+                MessageBox.Show("Error parsing file at position: " + pos);
                 textBox.SelectionStart = pos;
                 textBox.SelectionLength = textBox.Text.Length - pos + 1;
                 textBox.ScrollToCaret();
@@ -216,26 +219,20 @@ namespace parserTest
             textBox.ScrollToCaret();
         }
 
-        private TreeNode[] ConvertPathListToTree(ParsedProperty[] pathList)
+        private TreeNode[] ConvertPathListToTree(IEnumerable<ParsedProperty> pathList)
         {
+            var convertedPathList = _parser.ConvertForTreeProcessing(pathList);
+
             TreeNode node = null;
 
-            foreach (var propertyItem in pathList)
+            foreach (var propertyItem in convertedPathList)
             {
                 var itemPath = propertyItem.Path;
-
-                var pos = propertyItem.Path.IndexOf('[');
-                while (pos >= 0)
-                {
-                    itemPath = itemPath.Insert(pos, _pathDivider.ToString());
-                    pos = propertyItem.Path.IndexOf('[', pos + 1);
-                }
-
                 var tmpNode = node;
                 var tmpPath = new StringBuilder();
-                foreach (var token in itemPath.Split(new char[] { _pathDivider }))
+                foreach (var token in itemPath.Split(_pathDivider))
                 {
-                    tmpPath.Append(token + _pathDivider.ToString());
+                    tmpPath.Append(token + _pathDivider);
 
                     if (tmpNode == null)
                     {
