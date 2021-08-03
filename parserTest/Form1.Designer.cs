@@ -37,6 +37,10 @@ namespace parserTest
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.textBox_endPos = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.textBox_startPos = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.textBox_valueType = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.textBox_propertyType = new System.Windows.Forms.TextBox();
@@ -48,10 +52,8 @@ namespace parserTest
             this.button_dir = new System.Windows.Forms.Button();
             this.textBox = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            this.textBox_startPos = new System.Windows.Forms.TextBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.textBox_endPos = new System.Windows.Forms.TextBox();
-            this.label6 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.textBox_path = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -108,6 +110,8 @@ namespace parserTest
             this.splitContainer1.Panel2.Controls.Add(this.label4);
             this.splitContainer1.Panel2.Controls.Add(this.textBox_propertyType);
             this.splitContainer1.Panel2.Controls.Add(this.label3);
+            this.splitContainer1.Panel2.Controls.Add(this.textBox_path);
+            this.splitContainer1.Panel2.Controls.Add(this.label7);
             this.splitContainer1.Panel2.Controls.Add(this.textBox_value);
             this.splitContainer1.Panel2.Controls.Add(this.label2);
             this.splitContainer1.Panel2.Controls.Add(this.textBox_name);
@@ -160,11 +164,47 @@ namespace parserTest
             this.tabPage2.Text = "List";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
+            // textBox_endPos
+            // 
+            this.textBox_endPos.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox_endPos.Location = new System.Drawing.Point(415, 116);
+            this.textBox_endPos.Name = "textBox_endPos";
+            this.textBox_endPos.Size = new System.Drawing.Size(69, 20);
+            this.textBox_endPos.TabIndex = 13;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(357, 119);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(49, 13);
+            this.label6.TabIndex = 12;
+            this.label6.Text = "End pos.";
+            // 
+            // textBox_startPos
+            // 
+            this.textBox_startPos.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox_startPos.Location = new System.Drawing.Point(415, 90);
+            this.textBox_startPos.Name = "textBox_startPos";
+            this.textBox_startPos.Size = new System.Drawing.Size(69, 20);
+            this.textBox_startPos.TabIndex = 11;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(357, 93);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(52, 13);
+            this.label5.TabIndex = 10;
+            this.label5.Text = "Start pos.";
+            // 
             // textBox_valueType
             // 
             this.textBox_valueType.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_valueType.Location = new System.Drawing.Point(80, 90);
+            this.textBox_valueType.Location = new System.Drawing.Point(80, 116);
             this.textBox_valueType.Name = "textBox_valueType";
             this.textBox_valueType.Size = new System.Drawing.Size(271, 20);
             this.textBox_valueType.TabIndex = 9;
@@ -172,7 +212,7 @@ namespace parserTest
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(5, 93);
+            this.label4.Location = new System.Drawing.Point(5, 119);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(57, 13);
             this.label4.TabIndex = 8;
@@ -182,7 +222,7 @@ namespace parserTest
             // 
             this.textBox_propertyType.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_propertyType.Location = new System.Drawing.Point(80, 64);
+            this.textBox_propertyType.Location = new System.Drawing.Point(80, 90);
             this.textBox_propertyType.Name = "textBox_propertyType";
             this.textBox_propertyType.Size = new System.Drawing.Size(271, 20);
             this.textBox_propertyType.TabIndex = 7;
@@ -190,7 +230,7 @@ namespace parserTest
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(5, 67);
+            this.label3.Location = new System.Drawing.Point(5, 93);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(69, 13);
             this.label3.TabIndex = 6;
@@ -249,49 +289,31 @@ namespace parserTest
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox.HideSelection = false;
-            this.textBox.Location = new System.Drawing.Point(3, 116);
+            this.textBox.Location = new System.Drawing.Point(3, 142);
             this.textBox.Multiline = true;
             this.textBox.Name = "textBox";
             this.textBox.ReadOnly = true;
             this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBox.Size = new System.Drawing.Size(571, 351);
+            this.textBox.Size = new System.Drawing.Size(571, 325);
             this.textBox.TabIndex = 0;
             // 
-            // textBox_startPos
+            // label7
             // 
-            this.textBox_startPos.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(5, 67);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(29, 13);
+            this.label7.TabIndex = 4;
+            this.label7.Text = "Path";
+            // 
+            // textBox_path
+            // 
+            this.textBox_path.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_startPos.Location = new System.Drawing.Point(415, 64);
-            this.textBox_startPos.Name = "textBox_startPos";
-            this.textBox_startPos.Size = new System.Drawing.Size(69, 20);
-            this.textBox_startPos.TabIndex = 11;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(357, 67);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(52, 13);
-            this.label5.TabIndex = 10;
-            this.label5.Text = "Start pos.";
-            // 
-            // textBox_endPos
-            // 
-            this.textBox_endPos.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_endPos.Location = new System.Drawing.Point(415, 90);
-            this.textBox_endPos.Name = "textBox_endPos";
-            this.textBox_endPos.Size = new System.Drawing.Size(69, 20);
-            this.textBox_endPos.TabIndex = 13;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(357, 93);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(49, 13);
-            this.label6.TabIndex = 12;
-            this.label6.Text = "End pos.";
+            this.textBox_path.Location = new System.Drawing.Point(80, 64);
+            this.textBox_path.Name = "textBox_path";
+            this.textBox_path.Size = new System.Drawing.Size(404, 20);
+            this.textBox_path.TabIndex = 5;
             // 
             // Form1
             // 
@@ -338,6 +360,8 @@ namespace parserTest
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox textBox_startPos;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TextBox textBox_path;
+        private System.Windows.Forms.Label label7;
     }
 }
 

@@ -401,11 +401,11 @@ namespace JsonPathParserLib
                     if (_jsonText[pos] == ',' || _jsonText[pos] == ']') // it's an array of values
                     {
                         pos--;
-                        newElement.Value = newName;
                         newElement.JsonPropertyType = JsonPropertyTypes.ArrayValue;
                         newElement.EndPosition = pos;
                         newElement.Path = currentPath;
                         newElement.ValueType = GetVariableType(newName);
+                        newElement.Value = newElement.ValueType == JsonValueTypes.String ? newName.Trim('\"') : newName;
                         return pos;
                     }
 

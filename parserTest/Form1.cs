@@ -12,7 +12,7 @@ namespace parserTest
     public partial class Form1 : Form
     {
         private const string RootName = "<root>";
-        private char PathDivider = '.';
+        private char _pathDivider = '.';
 
         public Form1()
         {
@@ -31,6 +31,7 @@ namespace parserTest
 
         private void OpenFileDialog_FileOk(object sender, CancelEventArgs e)
         {
+            listBox1.DataSource = null;
             listBox1.Items.Clear();
             treeView1.Nodes.Clear();
 
@@ -40,20 +41,20 @@ namespace parserTest
             Text = openFileDialog.FileName;
             var pos = -1;
             var errorFound = false;
-            PathDivider = treeView1.PathSeparator.FirstOrDefault();
+            _pathDivider = treeView1.PathSeparator.FirstOrDefault();
             ParsedProperty[] pathList = null;
 
-            var parcer = new JsonPathParser
+            var parser = new JsonPathParser
             {
                 TrimComplexValues = false,
                 SaveComplexValues = true,
                 RootName = RootName,
-                JsonPathDivider = PathDivider
+                JsonPathDivider = _pathDivider
             };
 
             try
             {
-                pathList = parcer.ParseJsonToPathList(jsonText, out pos, out errorFound).ToArray();
+                pathList = parser.ParseJsonToPathList(jsonText, out pos, out errorFound).ToArray();
             }
             catch (Exception ex)
             {
@@ -98,7 +99,7 @@ namespace parserTest
                     TrimComplexValues = false,
                     SaveComplexValues = true,
                     RootName = RootName,
-                    JsonPathDivider = PathDivider
+                    JsonPathDivider = _pathDivider
                 };
 
                 try
@@ -159,35 +160,11 @@ namespace parserTest
         {
             if (!(e.Node.Tag is ParsedProperty item))
             {
-                textBox_name.Text = "";
-                textBox_value.Text = "";
-                textBox_propertyType.Text = "";
-                textBox_valueType.Text = "";
-                textBox_startPos.Text = "";
-                textBox_endPos.Text = "";
-                textBox.SelectionLength = 0;
+                ClearFields();
                 return;
             }
 
-            var startPos = item.StartPosition;
-            var endPos = item.EndPosition;
-
-            if (startPos < 0 || startPos >= textBox.TextLength)
-                return;
-
-            if (endPos < 0 || endPos >= textBox.TextLength)
-                return;
-
-            textBox_name.Text = item.Name;
-            textBox_value.Text = item.Value;
-            textBox_propertyType.Text = item.JsonPropertyType.ToString();
-            textBox_valueType.Text = item.ValueType.ToString();
-            textBox_startPos.Text = item.StartPosition.ToString();
-            textBox_endPos.Text = item.EndPosition.ToString();
-
-            textBox.SelectionStart = startPos;
-            textBox.SelectionLength = endPos - startPos + 1;
-            textBox.ScrollToCaret();
+            FillFields(item);
             listBox1.Focus();
         }
 
@@ -195,16 +172,28 @@ namespace parserTest
         {
             if (!(listBox1.SelectedItem is ParsedProperty item))
             {
-                textBox_name.Text = "";
-                textBox_value.Text = "";
-                textBox_propertyType.Text = "";
-                textBox_valueType.Text = "";
-                textBox_startPos.Text = "";
-                textBox_endPos.Text = "";
-                textBox.SelectionLength = 0;
+                ClearFields();
                 return;
             }
 
+            FillFields(item);
+            listBox1.Focus();
+        }
+
+        private void ClearFields()
+        {
+            textBox_name.Text = "";
+            textBox_value.Text = "";
+            textBox_path.Text = "";
+            textBox_propertyType.Text = "";
+            textBox_valueType.Text = "";
+            textBox_startPos.Text = "";
+            textBox_endPos.Text = "";
+            textBox.SelectionLength = 0;
+        }
+
+        private void FillFields(ParsedProperty item)
+        {
             var startPos = item.StartPosition;
             var endPos = item.EndPosition;
 
@@ -216,6 +205,7 @@ namespace parserTest
 
             textBox_name.Text = item.Name;
             textBox_value.Text = item.Value;
+            textBox_path.Text = item.Path;
             textBox_propertyType.Text = item.JsonPropertyType.ToString();
             textBox_valueType.Text = item.ValueType.ToString();
             textBox_startPos.Text = item.StartPosition.ToString();
@@ -224,10 +214,9 @@ namespace parserTest
             textBox.SelectionStart = startPos;
             textBox.SelectionLength = endPos - startPos + 1;
             textBox.ScrollToCaret();
-            listBox1.Focus();
         }
 
-        public TreeNode[] ConvertPathListToTree(ParsedProperty[] pathList)
+        private TreeNode[] ConvertPathListToTree(ParsedProperty[] pathList)
         {
             TreeNode node = null;
 
@@ -235,11 +224,18 @@ namespace parserTest
             {
                 var itemPath = propertyItem.Path;
 
+                var pos = propertyItem.Path.IndexOf('[');
+                while (pos >= 0)
+                {
+                    itemPath = itemPath.Insert(pos, _pathDivider.ToString());
+                    pos = propertyItem.Path.IndexOf('[', pos + 1);
+                }
+
                 var tmpNode = node;
                 var tmpPath = new StringBuilder();
-                foreach (var token in itemPath.Split(new char[] { PathDivider }))
+                foreach (var token in itemPath.Split(new char[] { _pathDivider }))
                 {
-                    tmpPath.Append(token + PathDivider.ToString());
+                    tmpPath.Append(token + _pathDivider.ToString());
 
                     if (tmpNode == null)
                     {
@@ -267,7 +263,7 @@ namespace parserTest
                 }
             }
 
-            return node.Nodes.OfType<TreeNode>().ToArray();
+            return node?.Nodes.OfType<TreeNode>().ToArray();
         }
     }
 }
