@@ -37,14 +37,21 @@ namespace parserTest
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.textBox_endPos = new System.Windows.Forms.TextBox();
-            this.label6 = new System.Windows.Forms.Label();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.textBox_startPos = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.textBox_valueType = new System.Windows.Forms.TextBox();
-            this.label4 = new System.Windows.Forms.Label();
+            this.textBox_endPos = new System.Windows.Forms.TextBox();
             this.textBox_propertyType = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
+            this.textBox_startLine = new System.Windows.Forms.TextBox();
+            this.textBox_endLine = new System.Windows.Forms.TextBox();
+            this.textBox_path = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.textBox_value = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.textBox_name = new System.Windows.Forms.TextBox();
@@ -52,8 +59,6 @@ namespace parserTest
             this.button_dir = new System.Windows.Forms.Button();
             this.textBox = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            this.label7 = new System.Windows.Forms.Label();
-            this.textBox_path = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -61,6 +66,7 @@ namespace parserTest
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // listBox1
@@ -101,15 +107,8 @@ namespace parserTest
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.tableLayoutPanel1);
             this.splitContainer1.Panel2.Controls.Add(this.button_open);
-            this.splitContainer1.Panel2.Controls.Add(this.textBox_endPos);
-            this.splitContainer1.Panel2.Controls.Add(this.label6);
-            this.splitContainer1.Panel2.Controls.Add(this.textBox_startPos);
-            this.splitContainer1.Panel2.Controls.Add(this.label5);
-            this.splitContainer1.Panel2.Controls.Add(this.textBox_valueType);
-            this.splitContainer1.Panel2.Controls.Add(this.label4);
-            this.splitContainer1.Panel2.Controls.Add(this.textBox_propertyType);
-            this.splitContainer1.Panel2.Controls.Add(this.label3);
             this.splitContainer1.Panel2.Controls.Add(this.textBox_path);
             this.splitContainer1.Panel2.Controls.Add(this.label7);
             this.splitContainer1.Panel2.Controls.Add(this.textBox_value);
@@ -164,37 +163,51 @@ namespace parserTest
             this.tabPage2.Text = "List";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
-            // textBox_endPos
+            // tableLayoutPanel1
             // 
-            this.textBox_endPos.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.tableLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_endPos.Location = new System.Drawing.Point(415, 116);
-            this.textBox_endPos.Name = "textBox_endPos";
-            this.textBox_endPos.Size = new System.Drawing.Size(69, 20);
-            this.textBox_endPos.TabIndex = 13;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(357, 119);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(49, 13);
-            this.label6.TabIndex = 12;
-            this.label6.Text = "End pos.";
+            this.tableLayoutPanel1.ColumnCount = 6;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 75F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 45.39249F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25.93857F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 28.66894F));
+            this.tableLayoutPanel1.Controls.Add(this.textBox_startPos, 3, 0);
+            this.tableLayoutPanel1.Controls.Add(this.label5, 2, 0);
+            this.tableLayoutPanel1.Controls.Add(this.textBox_valueType, 1, 1);
+            this.tableLayoutPanel1.Controls.Add(this.textBox_endPos, 3, 1);
+            this.tableLayoutPanel1.Controls.Add(this.textBox_propertyType, 1, 0);
+            this.tableLayoutPanel1.Controls.Add(this.label4, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.label6, 2, 1);
+            this.tableLayoutPanel1.Controls.Add(this.label3, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.label8, 4, 0);
+            this.tableLayoutPanel1.Controls.Add(this.label9, 4, 1);
+            this.tableLayoutPanel1.Controls.Add(this.textBox_startLine, 5, 0);
+            this.tableLayoutPanel1.Controls.Add(this.textBox_endLine, 5, 1);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(2, 90);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 2;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(482, 56);
+            this.tableLayoutPanel1.TabIndex = 14;
             // 
             // textBox_startPos
             // 
             this.textBox_startPos.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_startPos.Location = new System.Drawing.Point(415, 90);
+            this.textBox_startPos.Location = new System.Drawing.Point(268, 3);
+            this.textBox_startPos.MaxLength = 100;
             this.textBox_startPos.Name = "textBox_startPos";
-            this.textBox_startPos.Size = new System.Drawing.Size(69, 20);
+            this.textBox_startPos.Size = new System.Drawing.Size(68, 20);
             this.textBox_startPos.TabIndex = 11;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(357, 93);
+            this.label5.Location = new System.Drawing.Point(208, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(52, 13);
             this.label5.TabIndex = 10;
@@ -204,37 +217,108 @@ namespace parserTest
             // 
             this.textBox_valueType.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_valueType.Location = new System.Drawing.Point(80, 116);
+            this.textBox_valueType.Location = new System.Drawing.Point(78, 31);
             this.textBox_valueType.Name = "textBox_valueType";
-            this.textBox_valueType.Size = new System.Drawing.Size(271, 20);
+            this.textBox_valueType.Size = new System.Drawing.Size(124, 20);
             this.textBox_valueType.TabIndex = 9;
             // 
-            // label4
+            // textBox_endPos
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(5, 119);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(57, 13);
-            this.label4.TabIndex = 8;
-            this.label4.Text = "Value type";
+            this.textBox_endPos.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox_endPos.Location = new System.Drawing.Point(268, 31);
+            this.textBox_endPos.MaxLength = 100;
+            this.textBox_endPos.Name = "textBox_endPos";
+            this.textBox_endPos.Size = new System.Drawing.Size(68, 20);
+            this.textBox_endPos.TabIndex = 13;
             // 
             // textBox_propertyType
             // 
             this.textBox_propertyType.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_propertyType.Location = new System.Drawing.Point(80, 90);
+            this.textBox_propertyType.Location = new System.Drawing.Point(78, 3);
             this.textBox_propertyType.Name = "textBox_propertyType";
-            this.textBox_propertyType.Size = new System.Drawing.Size(271, 20);
+            this.textBox_propertyType.Size = new System.Drawing.Size(124, 20);
             this.textBox_propertyType.TabIndex = 7;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(3, 28);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(57, 13);
+            this.label4.TabIndex = 8;
+            this.label4.Text = "Value type";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(208, 28);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(49, 13);
+            this.label6.TabIndex = 12;
+            this.label6.Text = "End pos.";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(5, 93);
+            this.label3.Location = new System.Drawing.Point(3, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(69, 13);
             this.label3.TabIndex = 6;
             this.label3.Text = "Property type";
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(342, 0);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(48, 13);
+            this.label8.TabIndex = 14;
+            this.label8.Text = "Start line";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(342, 28);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(45, 13);
+            this.label9.TabIndex = 15;
+            this.label9.Text = "End line";
+            // 
+            // textBox_startLine
+            // 
+            this.textBox_startLine.Location = new System.Drawing.Point(402, 3);
+            this.textBox_startLine.MaxLength = 100;
+            this.textBox_startLine.Name = "textBox_startLine";
+            this.textBox_startLine.Size = new System.Drawing.Size(77, 20);
+            this.textBox_startLine.TabIndex = 16;
+            // 
+            // textBox_endLine
+            // 
+            this.textBox_endLine.Location = new System.Drawing.Point(402, 31);
+            this.textBox_endLine.MaxLength = 100;
+            this.textBox_endLine.Name = "textBox_endLine";
+            this.textBox_endLine.Size = new System.Drawing.Size(77, 20);
+            this.textBox_endLine.TabIndex = 17;
+            // 
+            // textBox_path
+            // 
+            this.textBox_path.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox_path.Location = new System.Drawing.Point(80, 64);
+            this.textBox_path.Name = "textBox_path";
+            this.textBox_path.Size = new System.Drawing.Size(404, 20);
+            this.textBox_path.TabIndex = 5;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(5, 67);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(29, 13);
+            this.label7.TabIndex = 4;
+            this.label7.Text = "Path";
             // 
             // textBox_value
             // 
@@ -289,31 +373,13 @@ namespace parserTest
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox.HideSelection = false;
-            this.textBox.Location = new System.Drawing.Point(3, 142);
+            this.textBox.Location = new System.Drawing.Point(3, 152);
             this.textBox.Multiline = true;
             this.textBox.Name = "textBox";
             this.textBox.ReadOnly = true;
             this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBox.Size = new System.Drawing.Size(571, 325);
+            this.textBox.Size = new System.Drawing.Size(571, 315);
             this.textBox.TabIndex = 0;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(5, 67);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(29, 13);
-            this.label7.TabIndex = 4;
-            this.label7.Text = "Path";
-            // 
-            // textBox_path
-            // 
-            this.textBox_path.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_path.Location = new System.Drawing.Point(80, 64);
-            this.textBox_path.Name = "textBox_path";
-            this.textBox_path.Size = new System.Drawing.Size(404, 20);
-            this.textBox_path.TabIndex = 5;
             // 
             // Form1
             // 
@@ -331,6 +397,8 @@ namespace parserTest
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -362,6 +430,11 @@ namespace parserTest
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TextBox textBox_path;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.TextBox textBox_startLine;
+        private System.Windows.Forms.TextBox textBox_endLine;
     }
 }
 

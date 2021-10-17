@@ -66,7 +66,7 @@ namespace parserTest
 
             if (errorFound)
             {
-                MessageBox.Show("Error parsing file at position: " + pos);
+                MessageBox.Show("Error parsing file at position: " + pos.ToString());
                 textBox.SelectionStart = pos;
                 textBox.SelectionLength = textBox.Text.Length - pos + 1;
                 textBox.ScrollToCaret();
@@ -192,6 +192,8 @@ namespace parserTest
             textBox_valueType.Text = "";
             textBox_startPos.Text = "";
             textBox_endPos.Text = "";
+            textBox_startLine.Text = "";
+            textBox_endLine.Text = "";
             textBox.SelectionLength = 0;
         }
 
@@ -200,11 +202,6 @@ namespace parserTest
             var startPos = item.StartPosition;
             var endPos = item.EndPosition;
 
-            textBox.SelectionLength = 0;
-            if (startPos < 0 || startPos >= textBox.TextLength)
-                return;
-            if (endPos < 0 || endPos >= textBox.TextLength)
-                return;
 
             textBox_name.Text = item.Name;
             textBox_value.Text = item.Value;
@@ -214,6 +211,16 @@ namespace parserTest
             textBox_startPos.Text = item.StartPosition.ToString();
             textBox_endPos.Text = item.EndPosition.ToString();
 
+            JsonPathParser.GetLinesNumber(textBox.Text, item.StartPosition, item.EndPosition, out var startLine, out var endLine);
+            textBox_startLine.Text = startLine.ToString();
+            textBox_endLine.Text = endLine.ToString();
+
+            textBox.SelectionLength = 0;
+            if (startPos < 0 || startPos >= textBox.TextLength)
+                return;
+            if (endPos < 0 || endPos >= textBox.TextLength)
+                return;
+
             textBox.SelectionStart = startPos;
             textBox.SelectionLength = endPos - startPos + 1;
             textBox.ScrollToCaret();
@@ -221,22 +228,27 @@ namespace parserTest
 
         private TreeNode[] ConvertPathListToTree(IEnumerable<ParsedProperty> pathList)
         {
-            var convertedPathList = _parser.ConvertForTreeProcessing(pathList);
+            pathList = _parser.ConvertForTreeProcessing(pathList);
 
             TreeNode node = null;
 
-            foreach (var propertyItem in convertedPathList)
+            foreach (var propertyItem in pathList)
             {
                 var itemPath = propertyItem.Path;
                 var tmpNode = node;
                 var tmpPath = new StringBuilder();
                 foreach (var token in itemPath.Split(_pathDivider))
                 {
+                    string nodeName = token;
                     tmpPath.Append(token + _pathDivider);
+                    if (propertyItem.JsonPropertyType == JsonPropertyTypes.Array)
+                        nodeName += "[]";
+                    else if (propertyItem.JsonPropertyType == JsonPropertyTypes.Object)
+                        nodeName += "{}";
 
                     if (tmpNode == null)
                     {
-                        node = new TreeNode(token)
+                        node = new TreeNode(nodeName)
                         {
                             Tag = propertyItem,
                             Name = tmpPath.ToString()
@@ -247,7 +259,7 @@ namespace parserTest
 
                     if (!tmpNode.Nodes.ContainsKey(tmpPath.ToString()))
                     {
-                        var newNode = new TreeNode(token)
+                        var newNode = new TreeNode(nodeName)
                         {
                             Tag = propertyItem,
                             Name = tmpPath.ToString()
@@ -262,5 +274,6 @@ namespace parserTest
 
             return node?.Nodes.OfType<TreeNode>().ToArray();
         }
+
     }
 }
