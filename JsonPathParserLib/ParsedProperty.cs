@@ -4,21 +4,61 @@
     {
         public int StartPosition = -1;
         public int EndPosition = -1;
-        public string Path = "";
         public string Name = "";
         public string Value = "";
         public JsonPropertyTypes JsonPropertyType = JsonPropertyTypes.Unknown;
         public JsonValueTypes ValueType;
+
+        private string _path = "";
+        public string Path
+        {
+            get => _path;
+            set
+            {
+                _parentPath = null;
+                _path = value;
+            }
+        }
+
+        private string _parentPath;
+        public string ParentPath
+        {
+            get
+            {
+                if (_parentPath == null)
+                {
+                    _parentPath = TrimPathEnd(Path, 1);
+                }
+
+                return _parentPath;
+            }
+        }
 
         public int RawLength
         {
             get
             {
                 if (StartPosition == -1 || EndPosition == -1)
-                    return 0;
+                    return -1;
 
                 return EndPosition - StartPosition + 1;
             }
+        }
+
+        private static string TrimPathEnd(string originalPath, int levels)
+        {
+            for (; levels > 0; levels--)
+            {
+                var pos = originalPath.LastIndexOf('.');
+                if (pos >= 0)
+                {
+                    originalPath = originalPath.Substring(0, pos);
+                }
+                else
+                    break;
+            }
+
+            return originalPath;
         }
 
         public override string ToString()
