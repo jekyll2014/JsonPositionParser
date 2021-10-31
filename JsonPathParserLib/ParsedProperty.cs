@@ -8,7 +8,7 @@
         public string Value = "";
         public JsonPropertyTypes JsonPropertyType = JsonPropertyTypes.Unknown;
         public JsonValueTypes ValueType;
-
+        public char PathDivider = '.';
         private string _path = "";
         public string Path
         {
@@ -27,7 +27,7 @@
             {
                 if (_parentPath == null)
                 {
-                    _parentPath = TrimPathEnd(Path, 1);
+                    _parentPath = TrimPathEnd(Path, 1, PathDivider);
                 }
 
                 return _parentPath;
@@ -45,11 +45,11 @@
             }
         }
 
-        private static string TrimPathEnd(string originalPath, int levels)
+        private static string TrimPathEnd(string originalPath, int levels, char pathDivider)
         {
             for (; levels > 0; levels--)
             {
-                var pos = originalPath.LastIndexOf('.');
+                var pos = originalPath.LastIndexOf(pathDivider);
                 if (pos >= 0)
                 {
                     originalPath = originalPath.Substring(0, pos);

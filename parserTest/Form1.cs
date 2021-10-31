@@ -27,8 +27,8 @@ namespace parserTest
         {
             openFileDialog.FileName = "";
             openFileDialog.Title = "Open json file";
-            openFileDialog.DefaultExt = "jsonc";
-            openFileDialog.Filter = "Kinetic files|*.jsonc|JSON files|*.json|All files|*.*";
+            openFileDialog.DefaultExt = "json";
+            openFileDialog.Filter = "JSON files|*.json|All files|*.*";
             openFileDialog.ShowDialog();
         }
 
@@ -239,8 +239,15 @@ namespace parserTest
                 var tmpPath = new StringBuilder();
                 foreach (var token in itemPath.Split(_pathDivider))
                 {
-                    string nodeName = token;
+                    var nodeName = token;
                     tmpPath.Append(token + _pathDivider);
+
+                    var tmpProp = pathList.Where(n=>n.Path == tmpPath.ToString().TrimEnd(_pathDivider));
+                    if (!tmpProp.Any())
+                    {
+                        ;
+                    }
+
                     if (propertyItem.JsonPropertyType == JsonPropertyTypes.Array)
                         nodeName += "[]";
                     else if (propertyItem.JsonPropertyType == JsonPropertyTypes.Object)

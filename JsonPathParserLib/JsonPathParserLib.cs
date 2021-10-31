@@ -9,7 +9,7 @@ namespace JsonPathParserLib
     {
         private string _jsonText;
 
-        private List<ParsedProperty> _pathIndex;
+        private List<ParsedProperty> _properties = new List<ParsedProperty>();
 
         private readonly char[] _escapeChars = new char[] { '\"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u' };
         private readonly char[] _allowedChars = new char[] { ' ', '\t', '\r', '\n' };
@@ -50,7 +50,7 @@ namespace JsonPathParserLib
             if (!items.Any())
                 return null;
 
-            return items.Where(n => n.Path == path).FirstOrDefault();
+            return items.FirstOrDefault(n => n.Path == path);
         }
 
         public static bool GetLinesNumber(string jsonText, int startPosition, int endPosition, out int startLine, out int endLine)
@@ -176,36 +176,27 @@ namespace JsonPathParserLib
             foreach (var property in schemaProperties)
             {
                 var tmpStr = new StringBuilder();
-                var path = property.Path;
-                tmpStr.Append(path);
-                var pos = path.IndexOf('[');
+                tmpStr.Append(property.Path);
+                var pos = tmpStr.ToString().IndexOf('[');
                 while (pos >= 0)
                 {
                     tmpStr.Insert(pos, JsonPathDivider);
-                    pos = path.IndexOf('[', pos + 1);
+                    pos = tmpStr.ToString().IndexOf('[', pos + 2);
                 }
-                property.Path = tmpStr.ToString();
 
-                /*if (property.JsonPropertyType == JsonPropertyTypes.ArrayValue)
+                var newProperty = new ParsedProperty
                 {
-                    if (path.LastIndexOf('[') >= 0 && path.Length > path.LastIndexOf('['))
-                    {
-                        var name = path.Substring(path.LastIndexOf('['));
-                        var newProperty = new ParsedProperty
-                        {
-                            Name = name,
-                            Path = property.Path,
-                            JsonPropertyType = JsonPropertyTypes.Array,
-                            EndPosition = property.EndPosition,
-                            StartPosition = property.StartPosition,
-                            Value = property.Value,
-                            ValueType = property.ValueType
-                        };
-                        result.Add(newProperty);
-                    }
-                }*/
+                    Name = property.Name,
+                    Path = tmpStr.ToString(),
+                    JsonPropertyType = property.JsonPropertyType,
+                    EndPosition = property.EndPosition,
+                    StartPosition = property.StartPosition,
+                    Value = property.Value,
+                    ValueType = property.ValueType,
+                    PathDivider = JsonPathDivider
+                };
 
-                result.Add(property);
+                result.Add(newProperty);
             }
 
             return result;
@@ -216,12 +207,12 @@ namespace JsonPathParserLib
             _jsonText = jsonText;
             endPosition = 0;
             _errorFound = false;
-            _pathIndex = new List<ParsedProperty>();
+            _properties = new List<ParsedProperty>();
 
             if (string.IsNullOrEmpty(jsonText))
             {
                 errorFound = _errorFound;
-                return _pathIndex;
+                return _properties;
             }
 
             var currentPath = RootName;
@@ -258,7 +249,7 @@ namespace JsonPathParserLib
             }
 
             errorFound = _errorFound;
-            return _pathIndex;
+            return _properties;
         }
 
         private int FindStartOfNextToken(int pos, out JsonPropertyTypes foundObjectTypes)
@@ -316,12 +307,11 @@ namespace JsonPathParserLib
         {
             if (_searchMode)
             {
-                var lastItem = _pathIndex?.LastOrDefault();
+                var lastItem = _properties?.LastOrDefault();
                 if (lastItem?.Path == _searchPath)
                 {
                     if (SearchStartOnly
-                        || (!SearchStartOnly
-                        && lastItem?.JsonPropertyType != JsonPropertyTypes.Array
+                        || (lastItem?.JsonPropertyType != JsonPropertyTypes.Array
                         && lastItem?.JsonPropertyType != JsonPropertyTypes.Object))
                     {
                         _errorFound = true;
@@ -330,7 +320,7 @@ namespace JsonPathParserLib
                 }
                 else
                 {
-                    _pathIndex?.Remove(_pathIndex?.LastOrDefault());
+                    _properties?.Remove(_properties.LastOrDefault());
                 }
             }
 
@@ -341,7 +331,7 @@ namespace JsonPathParserLib
                 Path = currentPath,
                 ValueType = JsonValueTypes.NotProperty
             };
-            _pathIndex?.Add(newElement);
+            _properties?.Add(newElement);
 
             pos++;
 
@@ -430,12 +420,11 @@ namespace JsonPathParserLib
         {
             if (_searchMode)
             {
-                var lastItem = _pathIndex?.LastOrDefault();
+                var lastItem = _properties?.LastOrDefault();
                 if (lastItem?.Path == _searchPath)
                 {
                     if (SearchStartOnly
-                        || (!SearchStartOnly
-                        && lastItem?.JsonPropertyType != JsonPropertyTypes.Array
+                        || (lastItem?.JsonPropertyType != JsonPropertyTypes.Array
                         && lastItem?.JsonPropertyType != JsonPropertyTypes.Object))
                     {
                         _errorFound = true;
@@ -444,7 +433,7 @@ namespace JsonPathParserLib
                 }
                 else
                 {
-                    _pathIndex?.Remove(_pathIndex?.LastOrDefault());
+                    _properties?.Remove(_properties.LastOrDefault());
                 }
             }
 
@@ -452,7 +441,7 @@ namespace JsonPathParserLib
             {
                 StartPosition = pos
             };
-            _pathIndex?.Add(newElement);
+            _properties?.Add(newElement);
 
             pos++;
             for (; pos < _jsonText.Length; pos++) // searching for property name end
@@ -589,12 +578,11 @@ namespace JsonPathParserLib
         {
             if (_searchMode)
             {
-                var lastItem = _pathIndex?.LastOrDefault();
+                var lastItem = _properties?.LastOrDefault();
                 if (lastItem?.Path == _searchPath)
                 {
                     if (SearchStartOnly
-                        || (!SearchStartOnly
-                        && lastItem?.JsonPropertyType != JsonPropertyTypes.Array
+                        || (lastItem?.JsonPropertyType != JsonPropertyTypes.Array
                         && lastItem?.JsonPropertyType != JsonPropertyTypes.Object))
                     {
                         _errorFound = true;
@@ -603,7 +591,7 @@ namespace JsonPathParserLib
                 }
                 else
                 {
-                    _pathIndex?.Remove(_pathIndex?.LastOrDefault());
+                    _properties?.Remove(_properties.LastOrDefault());
                 }
             }
 
@@ -611,7 +599,7 @@ namespace JsonPathParserLib
             {
                 StartPosition = pos
             };
-            _pathIndex?.Add(newElement);
+            _properties?.Add(newElement);
 
             var endingChars = new[] { ',', '}', ']', '\r', '\n', '/' };
 
@@ -818,12 +806,11 @@ namespace JsonPathParserLib
         {
             if (_searchMode)
             {
-                var lastItem = _pathIndex?.LastOrDefault();
+                var lastItem = _properties?.LastOrDefault();
                 if (lastItem?.Path == _searchPath)
                 {
                     if (SearchStartOnly
-                        || (!SearchStartOnly
-                        && lastItem?.JsonPropertyType != JsonPropertyTypes.Array
+                        || (lastItem?.JsonPropertyType != JsonPropertyTypes.Array
                         && lastItem?.JsonPropertyType != JsonPropertyTypes.Object))
                     {
                         _errorFound = true;
@@ -832,7 +819,7 @@ namespace JsonPathParserLib
                 }
                 else
                 {
-                    _pathIndex?.Remove(_pathIndex?.LastOrDefault());
+                    _properties?.Remove(_properties.LastOrDefault());
                 }
             }
 
@@ -843,7 +830,7 @@ namespace JsonPathParserLib
                 newElement.JsonPropertyType = JsonPropertyTypes.Object;
                 newElement.Path = currentPath;
                 newElement.ValueType = JsonValueTypes.NotProperty;
-                _pathIndex?.Add(newElement);
+                _properties?.Add(newElement);
             }
 
             pos++;
@@ -882,13 +869,10 @@ namespace JsonPathParserLib
                                 }
                             }
 
-                            if (_searchMode)
+                            if (_searchMode && currentPath == _searchPath)
                             {
-                                if (currentPath == _searchPath)
-                                {
-                                    _errorFound = true;
-                                    return pos;
-                                }
+                                _errorFound = true;
+                                return pos;
                             }
                         }
 
