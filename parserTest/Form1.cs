@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections;
+﻿using JsonPathParserLib;
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-
-using JsonPathParserLib;
 
 namespace parserTest
 {
@@ -230,23 +229,17 @@ namespace parserTest
         {
             pathList = _parser.ConvertForTreeProcessing(pathList);
 
-            TreeNode node = null;
+            var node = new TreeNode("?");
 
             foreach (var propertyItem in pathList)
             {
                 var itemPath = propertyItem.Path;
-                var tmpNode = node;
+                var tmpNode = node?.LastNode;
                 var tmpPath = new StringBuilder();
                 foreach (var token in itemPath.Split(_pathDivider))
                 {
                     var nodeName = token;
                     tmpPath.Append(token + _pathDivider);
-
-                    var tmpProp = pathList.Where(n=>n.Path == tmpPath.ToString().TrimEnd(_pathDivider));
-                    if (!tmpProp.Any())
-                    {
-                        ;
-                    }
 
                     if (propertyItem.JsonPropertyType == JsonPropertyTypes.Array)
                         nodeName += "[]";
@@ -255,16 +248,33 @@ namespace parserTest
 
                     if (tmpNode == null)
                     {
-                        node = new TreeNode(nodeName)
+                        var newNode = new TreeNode(nodeName)
+                        {
+                            Tag = propertyItem,
+                            Name = tmpPath.ToString()
+                        };
+                        node.Nodes.Add(newNode);
+                        //tmpNode = newNode;
+                        continue;
+                    }
+
+                    if (tmpPath.ToString() == RootName + _pathDivider && itemPath != RootName)
+                    {
+                        continue;
+                    }
+
+                    if (itemPath == RootName)
+                    {
+                        var newNode = new TreeNode(nodeName)
                         {
                             Tag = propertyItem,
                             Name = tmpPath.ToString()
                         };
 
-                        tmpNode = node;
+                        node.Nodes.Add(newNode);
+                        //tmpNode = newNode;
                     }
-
-                    if (!tmpNode.Nodes.ContainsKey(tmpPath.ToString()))
+                    else if (!tmpNode.Nodes.ContainsKey(tmpPath.ToString()))
                     {
                         var newNode = new TreeNode(nodeName)
                         {
@@ -274,13 +284,14 @@ namespace parserTest
 
                         tmpNode.Nodes.Add(newNode);
                     }
-
-                    tmpNode = tmpNode.Nodes[tmpPath.ToString()];
+                    else
+                    {
+                        tmpNode = tmpNode.Nodes[tmpPath.ToString()];
+                    }
                 }
             }
 
             return node?.Nodes.OfType<TreeNode>().ToArray();
         }
-
     }
 }
