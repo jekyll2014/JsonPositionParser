@@ -1,6 +1,6 @@
 ﻿namespace JsonPathParserLib
 {
-    public enum JsonPropertyTypes
+    public enum JsonPropertyType
     {
         Unknown,
         Comment,

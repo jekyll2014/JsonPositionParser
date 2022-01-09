@@ -136,7 +136,7 @@ namespace parserTest
 
                 // find duplicate json paths
                 var item2 = pathList.Where(n =>
-                        n.JsonPropertyType != JsonPropertyTypes.Comment)
+                        n.JsonPropertyType != JsonPropertyType.Comment)
                     .ToArray()
                     .GroupBy(n => n.Path)
                     .Where(n => n.Count() > 1).ToArray();
@@ -241,9 +241,9 @@ namespace parserTest
                     var nodeName = token;
                     tmpPath.Append(token + _pathDivider);
 
-                    if (propertyItem.JsonPropertyType == JsonPropertyTypes.Array)
+                    if (propertyItem.JsonPropertyType == JsonPropertyType.Array)
                         nodeName += "[]";
-                    else if (propertyItem.JsonPropertyType == JsonPropertyTypes.Object)
+                    else if (propertyItem.JsonPropertyType == JsonPropertyType.Object)
                         nodeName += "{}";
 
                     if (tmpNode == null)
