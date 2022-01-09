@@ -7,7 +7,7 @@
         public string Name = "";
         public string Value = "";
         public JsonPropertyType JsonPropertyType = JsonPropertyType.Unknown;
-        public JsonValueTypes ValueType;
+        public JsonValueType ValueType;
         public char PathDivider = '.';
         private string _path = "";
         public string Path

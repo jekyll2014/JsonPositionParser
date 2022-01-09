@@ -36,6 +36,11 @@ namespace JsonPathParserLib
             return result;
         }
 
+        public IEnumerable<ParsedProperty> ParseJsonToPathList(string jsonText)
+        {
+            return StartParser(jsonText, out var _, out var _);
+        }
+
         public ParsedProperty SearchJsonPath(string jsonText, string path)
         {
             _searchMode = true;
@@ -56,29 +61,30 @@ namespace JsonPathParserLib
             return true;
         }
 
-        public static JsonValueTypes GetVariableType(string str)
+        public static JsonValueType GetVariableType(string str)
         {
-            var type = JsonValueTypes.Unknown;
+            var type = JsonValueType.Unknown;
 
             if (string.IsNullOrEmpty(str))
             {
-                type = JsonValueTypes.Unknown;
+                type = JsonValueType.Unknown;
             }
             else if (str.Length > 1 && str[0] == ('\"') && str[str.Length - 1] == ('\"'))
             {
-                type = JsonValueTypes.String;
+                type = JsonValueType.String;
             }
             else if (str == "null")
             {
-                type = JsonValueTypes.Null;
+                type = JsonValueType.Null;
             }
             else if (str == "true" || str == "false")
             {
-                type = JsonValueTypes.Boolean;
+                type = JsonValueType.Boolean;
             }
             else if (IsNumeric(str))
             {
-                type = JsonValueTypes.Number;
+                if (str.Contains('.')) type = JsonValueType.Number;
+                else type = JsonValueType.Integer;
             }
 
             return type;
@@ -324,7 +330,7 @@ namespace JsonPathParserLib
                 JsonPropertyType = JsonPropertyType.Comment,
                 StartPosition = pos,
                 Path = currentPath,
-                ValueType = JsonValueTypes.NotProperty
+                ValueType = JsonValueType.Unknown
             };
             _properties?.Add(newElement);
 
@@ -488,7 +494,7 @@ namespace JsonPathParserLib
                         newElement.EndPosition = pos;
                         newElement.Path = currentPath;
                         newElement.ValueType = GetVariableType(newName);
-                        newElement.Value = newElement.ValueType == JsonValueTypes.String ? newName.Trim('\"') : newName;
+                        newElement.Value = newElement.ValueType == JsonValueType.String ? newName.Trim('\"') : newName;
                         return pos;
                     }
 
@@ -515,7 +521,7 @@ namespace JsonPathParserLib
                         case '{':
                             newElement.JsonPropertyType = JsonPropertyType.Object;
                             newElement.EndPosition = pos = GetObject(pos, currentPath, false);
-                            newElement.ValueType = JsonValueTypes.NotProperty;
+                            newElement.ValueType = JsonValueType.Object;
 
                             if (SaveComplexValues)
                             {
@@ -533,7 +539,7 @@ namespace JsonPathParserLib
                         case '[':
                             newElement.JsonPropertyType = JsonPropertyType.Array;
                             newElement.EndPosition = pos = GetArray(pos, currentPath);
-                            newElement.ValueType = JsonValueTypes.NotProperty;
+                            newElement.ValueType = JsonValueType.Array;
 
                             if (SaveComplexValues)
                             {
@@ -554,7 +560,7 @@ namespace JsonPathParserLib
                             var newValue = _jsonText.Substring(valueStartPosition, pos - valueStartPosition + 1)
                                    .Trim();
                             newElement.ValueType = GetVariableType(newValue);
-                            newElement.Value = newElement.ValueType == JsonValueTypes.String ? newValue.Trim('\"') : newValue;
+                            newElement.Value = newElement.ValueType == JsonValueType.String ? newValue.Trim('\"') : newValue;
                             return pos;
                     }
                 }
@@ -824,7 +830,7 @@ namespace JsonPathParserLib
                 newElement.StartPosition = pos;
                 newElement.JsonPropertyType = JsonPropertyType.Object;
                 newElement.Path = currentPath;
-                newElement.ValueType = JsonValueTypes.NotProperty;
+                newElement.ValueType = JsonValueType.Object;
                 _properties?.Add(newElement);
             }
 

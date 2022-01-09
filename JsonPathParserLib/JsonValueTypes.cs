@@ -1,12 +1,14 @@
 ﻿namespace JsonPathParserLib
 {
-    public enum JsonValueTypes
+    public enum JsonValueType
     {
         Unknown,
-        NotProperty,
         String,
         Number,
+        Integer,
         Boolean,
         Null,
+        Array,
+        Object
     }
 }
