@@ -15,6 +15,7 @@ namespace parserTest
         private const string RootName = "<root>";
         private char _pathDivider = '.';
         private JsonPathParser _parser;
+        private string logFileName = "_bad_file.txt";
 
         public Form1()
         {
@@ -85,18 +86,34 @@ namespace parserTest
                 return;
 
             var filesList = Directory.GetFiles(folderBrowserDialog1.SelectedPath,
-                "*.jsonc",
+                "*.json*",
                 SearchOption.AllDirectories);
 
+            var errors = new List<(string file, string message)>();
             foreach (var file in filesList)
             {
-                var text = File.ReadAllText(file).Replace(' ', ' '); // replace &nbsp char with space
+                string text;
+                try
+                {
+                    text = File.ReadAllText(file);
+                }
+                catch (Exception ex)
+                {
+                    errors.Add((file, $"Error reading file: {ex.Message}"));
+                    continue;
+                }
 
+                // replace &nbsp char with space
+                if (text.Contains((char)160))
+                {
+                    text = text.Replace((char)160, (char)32);
+                    errors.Add((file, "&nbsp char in the file"));
+                }
                 var pos = -1;
                 var errorFound = false;
                 ParsedProperty[] pathList = null;
 
-                var parcer = new JsonPathParser
+                var parser = new JsonPathParser
                 {
                     TrimComplexValues = false,
                     SaveComplexValues = true,
@@ -106,55 +123,47 @@ namespace parserTest
 
                 try
                 {
-                    pathList = parcer.ParseJsonToPathList(text, out pos, out errorFound).ToArray();
+                    pathList = parser.ParseJsonToPathList(text, out pos, out errorFound).ToArray();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    File.AppendAllText("_bad_file.txt",
-                        file + Environment.NewLine + pos + Environment.NewLine + Environment.NewLine);
+                    errors.Add((file, $"Exception parsing file: {ex.Message} at position {pos}"));
                 }
 
                 // parsing failed
                 if (errorFound)
                 {
-                    File.AppendAllText("_bad_file.txt",
-                        file + Environment.NewLine + pos + Environment.NewLine + Environment.NewLine);
+                    errors.Add((file, $"Error parsing file at position {pos}"));
                 }
+
+                if (pathList == null)
+                    continue;
+
                 // not failed but have incorrect positions
-                var item1 = pathList.Where(n => n.EndPosition < 0 || n.StartPosition < 0).ToArray();
-                var jsonProperties = item1;
-                if (jsonProperties.Any())
+                var incorrectPositions = pathList.Where(n => n.EndPosition < 0 || n.StartPosition < 0).ToArray();
+                if (incorrectPositions.Any())
                 {
-                    File.AppendAllText("_bad_file.txt", file + Environment.NewLine);
-                    foreach (var item in jsonProperties)
-                    {
-                        File.AppendAllText("_bad_file.txt",
-                            item.Path + " = " + item.Value + Environment.NewLine);
-                    }
-                    File.AppendAllText("_bad_file.txt", Environment.NewLine);
+                    errors.AddRange(incorrectPositions.Select(item => (file, $"Incorrect [{item.Path}] object positions: start [{item.StartPosition}], end [{item.EndPosition}]")));
                 }
 
                 // find duplicate json paths
-                var item2 = pathList.Where(n =>
+                var duplicatePaths = pathList.Where(n =>
                         n.JsonPropertyType != JsonPropertyType.Comment)
                     .ToArray()
                     .GroupBy(n => n.Path)
                     .Where(n => n.Count() > 1).ToArray();
 
-                var enumerates = item2;
-                if (enumerates.Any())
-                {
-                    File.AppendAllText("_dup_file.txt", file + Environment.NewLine);
-                    foreach (var item3 in enumerates)
-                    {
-                        foreach (var item4 in item3)
-                        {
-                            File.AppendAllText("_dup_file.txt", item4.Path
-                                                                + " = " + item4.Value + Environment.NewLine);
-                        }
-                    }
-                    File.AppendAllText("_dup_file.txt", Environment.NewLine);
-                }
+                if (!duplicatePaths.Any()) continue;
+
+                errors.AddRange(from path in duplicatePaths from dupItem in path select (file, $"Duplicate path {dupItem.Path} at position {dupItem.StartPosition}"));
+            }
+
+            var errorMessages = errors.Aggregate(string.Empty, (current, item) => current + $"{item.file}: {item.message}{Environment.NewLine}");
+
+            if (!string.IsNullOrEmpty(errorMessages))
+            {
+                File.AppendAllText(logFileName, errorMessages);
+                MessageBox.Show($"Errors found: {errors.Count}\r\nSee log in the \"{logFileName}\"");
             }
         }
 
