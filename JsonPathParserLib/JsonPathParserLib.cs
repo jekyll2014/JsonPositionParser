@@ -781,12 +781,14 @@ namespace JsonPathParserLib
                         pos = GetKeywordOrNumber(pos, currentPath + "[" + arrayIndex + "]", true);
                         arrayIndex++;
                         break;
+                    case JsonPropertyType.Array:
+                        pos = GetArray(pos, currentPath);
+                        break;
                     case JsonPropertyType.EndOfArray:
                         if (_searchMode && currentPath == _searchPath)
                         {
                             _errorFound = true;
                         }
-
                         return pos;
                     default:
                         _errorFound = true;
@@ -851,6 +853,9 @@ namespace JsonPathParserLib
                         break;
                     case JsonPropertyType.Property:
                         pos = GetPropertyName(pos, currentPath);
+                        break;
+                    case JsonPropertyType.Array:
+                        pos = GetArray(pos, currentPath);
                         break;
                     case JsonPropertyType.Object:
                         pos = GetObject(pos, currentPath);
