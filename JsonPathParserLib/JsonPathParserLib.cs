@@ -825,7 +825,8 @@ namespace JsonPathParserLib
                 }
             }
 
-            var newElement = new ParsedProperty();
+            var newElement = new ParsedProperty(JsonPathDivider);
+
             if (save)
             {
                 newElement.StartPosition = pos;
