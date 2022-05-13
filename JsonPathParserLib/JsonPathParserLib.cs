@@ -12,7 +12,7 @@ namespace JsonPathParserLib
         private List<ParsedProperty> _properties = new List<ParsedProperty>();
 
         private readonly char[] _escapeChars = new char[] { '\"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u' };
-        private readonly char[] _allowedChars = new char[] { ' ', '\t', '\r', '\n' };
+        private readonly char[] _allowedSpacerChars = new char[] { ' ', '\t', '\r', '\n' };
         private readonly char[] _endOfLineChars = new char[] { '\r', '\n' };
         private readonly char[] _keywordOrNumberChars = "-0123456789.truefalsnl".ToCharArray();
         private readonly string[] _keywords = { "true", "false", "null" };
@@ -571,72 +571,6 @@ namespace JsonPathParserLib
             return pos;
         }
 
-        private int GetKeywordOrNumber(int pos, string currentPath, bool isArray)
-        {
-            if (_searchMode)
-            {
-                var lastItem = _properties?.LastOrDefault();
-                if (lastItem?.Path == _searchPath)
-                {
-                    if (SearchStartOnly
-                        || (lastItem?.JsonPropertyType != JsonPropertyType.Array
-                        && lastItem?.JsonPropertyType != JsonPropertyType.Object))
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
-                }
-                else
-                {
-                    _properties?.Remove(_properties.LastOrDefault());
-                }
-            }
-
-            var newElement = new ParsedProperty(JsonPathDivider)
-            {
-                StartPosition = pos
-            };
-            _properties?.Add(newElement);
-
-            var endingChars = new[] { ',', '}', ']', '\r', '\n', '/' };
-
-            for (; pos < _jsonText.Length; pos++) // searching for token end
-            {
-                var currentChar = _jsonText[pos];
-                // end of token found
-                if (endingChars.Contains(currentChar))
-                {
-                    pos--;
-                    var newValue = _jsonText
-                        .Substring(newElement.StartPosition, pos - newElement.StartPosition + 1)
-                        .Trim();
-
-                    if (!_keywords.Contains(newValue) && !IsNumeric(newValue))
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
-
-                    newElement.Value = newValue;
-                    newElement.JsonPropertyType = isArray ? JsonPropertyType.ArrayValue : JsonPropertyType.Property;
-                    newElement.EndPosition = pos;
-                    newElement.Path = currentPath;
-                    newElement.ValueType = GetVariableType(newValue);
-
-                    return pos;
-                }
-
-                if (!_keywordOrNumberChars.Contains(currentChar)) // check restricted chars
-                {
-                    _errorFound = true;
-                    return pos;
-                }
-            }
-
-            _errorFound = true;
-            return pos;
-        }
-
         private int GetPropertyDivider(int pos, string currentPath)
         {
             for (; pos < _jsonText.Length; pos++)
@@ -644,14 +578,14 @@ namespace JsonPathParserLib
                 switch (_jsonText[pos])
                 {
                     case ':':
-                    case ']':
-                    case ',':
+                    case ']': // ????
+                    case ',': // ????
                         return pos;
                     case '/':
                         pos = GetComment(pos, currentPath);
                         break;
                     default:
-                        if (!_allowedChars.Contains(_jsonText[pos]))
+                        if (!_allowedSpacerChars.Contains(_jsonText[pos]))
                         {
                             _errorFound = true;
                             return pos;
@@ -670,8 +604,9 @@ namespace JsonPathParserLib
             {
                 switch (_jsonText[pos])
                 {
-                    case '[':
                     // it's a start of array
+                    case '[':
+                    // or object
                     case '{':
                         return pos;
                     case '/':
@@ -698,6 +633,8 @@ namespace JsonPathParserLib
                                     {
                                         if (_jsonText[pos] == 'u') // if \u0000
                                             pos += 4;
+
+                                        continue;
                                     }
                                     else
                                     {
@@ -720,18 +657,23 @@ namespace JsonPathParserLib
                             return pos;
                         }
                     default:
-                        if (!_allowedChars.Contains(_jsonText[pos])) // it's a property non-string value
+                        if (!_allowedSpacerChars.Contains(_jsonText[pos])) // it's a literal property value
                         {
-                            // ??? check this
+                            // ???? check this
+                            // var endingChars = new[] { ',', ' ', '\t', '\r', '\n' };
                             var endingChars = new[] { ',', ']', '}', ' ', '\t', '\r', '\n', '/' };
                             for (; pos < _jsonText.Length; pos++)
                             {
+                                // ???? do I need to search for comments possible?
+
+                                // value end found
                                 if (endingChars.Contains(_jsonText[pos]))
                                 {
                                     pos--;
                                     return pos;
                                 }
 
+                                // non-allowed char found
                                 if (!_keywordOrNumberChars.Contains(_jsonText[pos])) // check restricted chars
                                 {
                                     _errorFound = true;
@@ -887,6 +829,72 @@ namespace JsonPathParserLib
 
                 if (_errorFound)
                 {
+                    return pos;
+                }
+            }
+
+            _errorFound = true;
+            return pos;
+        }
+
+        private int GetKeywordOrNumber(int pos, string currentPath, bool isArray)
+        {
+            if (_searchMode)
+            {
+                var lastItem = _properties?.LastOrDefault();
+                if (lastItem?.Path == _searchPath)
+                {
+                    if (SearchStartOnly
+                        || (lastItem?.JsonPropertyType != JsonPropertyType.Array
+                        && lastItem?.JsonPropertyType != JsonPropertyType.Object))
+                    {
+                        _errorFound = true;
+                        return pos;
+                    }
+                }
+                else
+                {
+                    _properties?.Remove(_properties.LastOrDefault());
+                }
+            }
+
+            var newElement = new ParsedProperty(JsonPathDivider)
+            {
+                StartPosition = pos
+            };
+            _properties?.Add(newElement);
+
+            var endingChars = new[] { ',', '}', ']', '\r', '\n', '/' };
+
+            for (; pos < _jsonText.Length; pos++) // searching for token end
+            {
+                var currentChar = _jsonText[pos];
+                // end of token found
+                if (endingChars.Contains(currentChar))
+                {
+                    pos--;
+                    var newValue = _jsonText
+                        .Substring(newElement.StartPosition, pos - newElement.StartPosition + 1)
+                        .Trim();
+
+                    if (!_keywords.Contains(newValue) && !IsNumeric(newValue))
+                    {
+                        _errorFound = true;
+                        return pos;
+                    }
+
+                    newElement.Value = newValue;
+                    newElement.JsonPropertyType = isArray ? JsonPropertyType.ArrayValue : JsonPropertyType.Property;
+                    newElement.EndPosition = pos;
+                    newElement.Path = currentPath;
+                    newElement.ValueType = GetVariableType(newValue);
+
+                    return pos;
+                }
+
+                if (!_keywordOrNumberChars.Contains(currentChar)) // check restricted chars
+                {
+                    _errorFound = true;
                     return pos;
                 }
             }
