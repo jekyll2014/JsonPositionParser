@@ -30,7 +30,7 @@ namespace JsonPathParserLib
         public IEnumerable<ParsedProperty> ParseJsonToPathList(string jsonText, out int endPosition, out bool errorFound)
         {
             _searchMode = false;
-            _searchPath = "";
+            _searchPath = string.Empty;
             var result = StartParser(jsonText, out endPosition, out errorFound);
 
             return result;
@@ -115,6 +115,11 @@ namespace JsonPathParserLib
                 return text;
             }
 
+            if (endPosition - startPosition <= 1)
+            {
+                return string.Empty;
+            }
+
             return text.Substring(startPosition + 1, endPosition - startPosition - 1).Trim();
         }
 
@@ -170,6 +175,9 @@ namespace JsonPathParserLib
 
         public IEnumerable<ParsedProperty> ConvertForTreeProcessing(IEnumerable<ParsedProperty> schemaProperties)
         {
+            if (schemaProperties == null)
+                return null;
+
             var result = new List<ParsedProperty>();
 
             foreach (var property in schemaProperties)
@@ -356,7 +364,7 @@ namespace JsonPathParserLib
                                 pos--;
                                 newElement.EndPosition = pos;
                                 newElement.Value = _jsonText.Substring(newElement.StartPosition + 2,
-                                    newElement.EndPosition - newElement.StartPosition + 1);
+                                    newElement.EndPosition - newElement.StartPosition - 1);
 
                                 return pos;
                             }
@@ -364,8 +372,7 @@ namespace JsonPathParserLib
 
                         pos--;
                         newElement.EndPosition = pos;
-                        newElement.Value = _jsonText.Substring(newElement.StartPosition + 2,
-                            newElement.EndPosition - newElement.StartPosition + 1);
+                        newElement.Value = _jsonText.Substring(newElement.StartPosition + 2);
 
                         return pos;
                     }
@@ -395,7 +402,7 @@ namespace JsonPathParserLib
                                     newElement.EndPosition = pos;
                                     newElement.Value = _jsonText.Substring(
                                         newElement.StartPosition + 2,
-                                        newElement.EndPosition - newElement.StartPosition - 1);
+                                        newElement.EndPosition - newElement.StartPosition - 3);
 
                                     return pos;
                                 }
@@ -502,7 +509,7 @@ namespace JsonPathParserLib
                     }
 
                     var valueStartPosition = pos;
-                    pos = GetPropertyValue(pos, currentPath);
+                    pos = GetPropertyValue(pos, currentPath, ref valueStartPosition);
                     if (_errorFound)
                     {
                         return pos;
@@ -598,7 +605,7 @@ namespace JsonPathParserLib
             return pos;
         }
 
-        private int GetPropertyValue(int pos, string currentPath)
+        private int GetPropertyValue(int pos, string currentPath, ref int propertyStartPos)
         {
             for (; pos < _jsonText.Length; pos++)
             {
@@ -612,6 +619,7 @@ namespace JsonPathParserLib
                     case '/':
                         //it's a comment
                         pos = GetComment(pos, currentPath);
+                        propertyStartPos = pos + 1;
                         break;
                     //it's a start of value string 
                     case '\"':
@@ -664,8 +672,6 @@ namespace JsonPathParserLib
                             var endingChars = new[] { ',', ']', '}', ' ', '\t', '\r', '\n', '/' };
                             for (; pos < _jsonText.Length; pos++)
                             {
-                                // ???? do I need to search for comments possible?
-
                                 // value end found
                                 if (endingChars.Contains(_jsonText[pos]))
                                 {
