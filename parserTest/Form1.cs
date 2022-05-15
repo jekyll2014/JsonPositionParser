@@ -76,7 +76,8 @@ namespace parserTest
             listBox1.DataSource = pathList;
 
             var rootNodes = ConvertPathListToTree(pathList);
-            treeView1.Nodes.AddRange(rootNodes);
+            if (rootNodes != null)
+                treeView1.Nodes.AddRange(rootNodes);
         }
 
         private void Button_dir_Click(object sender, EventArgs e)
@@ -236,6 +237,9 @@ namespace parserTest
 
         private TreeNode[] ConvertPathListToTree(IEnumerable<ParsedProperty> pathList)
         {
+            if (pathList == null)
+                return null;
+
             pathList = _parser.ConvertForTreeProcessing(pathList);
 
             var node = new TreeNode("?");
