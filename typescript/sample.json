@@ -1,0 +1,68 @@
+{
+  "title": /* comment2 */ "Допуск к работам", // comment 1 
+  "color" /* comment3 */: "#999999" /* comment4 */,
+  "default": /* comment 5 */ false /* comment 6 */,
+  "description": "Допуск к работам",
+  "data": {
+    "buttons": [
+      {
+        "title": "Отменить работы",
+        "primary": false
+      },
+      {
+        "title": "Допустить к работам",
+        "primary": true
+      }
+    ],
+    "tabs": [
+      {
+        "name": "GENERAL_INFORMATION",
+        "enable": true,
+        "visible": true,
+        "additions": {},
+        "relations": [],
+        "sections": [
+          {
+            "name": "FAVORITE",
+            "relations": [],
+            "enable": false,
+            "visible": false,
+            "additions": {},
+            "elements": []
+          },
+          {
+            "name": "STATUS",
+            "enable": false,
+            "visible": true,
+            "additions": {},
+            "relations": [],
+            "elements": []
+          }
+        ]
+      },
+      {
+        "name": "RESPONSIBLE_PERSONS",
+        "enable": true,
+        "visible": true,
+        "additions": {},
+        "relations": [],
+        "sections": [
+          {
+            "name": "CREATOR",
+            "enable": false,
+            "visible": true,
+            "relations": [],
+            "elements": []
+          },
+          {
+            "name": "ND_ISSUING",
+            "enable": false,
+            "visible": true,
+            "relations": [],
+            "elements": []
+          }
+        ]
+      }
+    ]
+  }
+} // end comment
