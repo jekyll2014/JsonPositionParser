@@ -363,7 +363,7 @@ namespace JsonPathParserLib
                             {
                                 pos--;
                                 newElement.EndPosition = pos;
-                                newElement.Value = _jsonText.Substring(newElement.StartPosition + 2,
+                                newElement.Value = _jsonText.Substring(newElement.StartPosition,
                                     newElement.EndPosition - newElement.StartPosition - 1);
 
                                 return pos;
@@ -372,7 +372,7 @@ namespace JsonPathParserLib
 
                         pos--;
                         newElement.EndPosition = pos;
-                        newElement.Value = _jsonText.Substring(newElement.StartPosition + 2);
+                        newElement.Value = _jsonText.Substring(newElement.StartPosition);
 
                         return pos;
                     }
@@ -401,8 +401,8 @@ namespace JsonPathParserLib
                                 {
                                     newElement.EndPosition = pos;
                                     newElement.Value = _jsonText.Substring(
-                                        newElement.StartPosition + 2,
-                                        newElement.EndPosition - newElement.StartPosition - 3);
+                                        newElement.StartPosition,
+                                        newElement.EndPosition - newElement.StartPosition + 1);
 
                                     return pos;
                                 }
