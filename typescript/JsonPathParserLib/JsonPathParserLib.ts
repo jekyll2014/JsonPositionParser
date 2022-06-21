@@ -1,10 +1,10 @@
-import ParsedProperty from './ParsedProperty';
+import JsonParsedProperty from './JsonParsedProperty';
 import { JsonPropertyType } from "./JsonPropertyType";
 import { JsonValueType } from "./JsonValueTypes";
 
 export default class JsonPathParser {
     private _jsonText: string;
-    private _properties: ParsedProperty[];
+    private _properties: JsonParsedProperty[];
     private _escapeChars: string[] = ['\"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u'];
     private _allowedSpacerChars: string[] = [' ', '\t', '\r', '\n'];
     private _endOfLineChars: string[] = ['\r', '\n'];
@@ -26,7 +26,7 @@ export default class JsonPathParser {
         this.JsonPathDivider = pathDivider;
     }
 
-    public ParseJsonToPathList(jsonText: string): [ParsedProperty[], number, boolean] {
+    public ParseJsonToPathList(jsonText: string): [JsonParsedProperty[], number, boolean] {
         this._searchMode = false;
         this._searchPath = "";
         let [result, endPosition, errorFound] = this.StartParser(jsonText);
@@ -38,21 +38,21 @@ export default class JsonPathParser {
         return [result, endPosition, errorFound];
     }
 
-    public SearchJsonPath(jsonText: string, path: string): ParsedProperty {
+    public SearchJsonPath(jsonText: string, path: string): JsonParsedProperty {
         this._searchMode = true;
         this._searchPath = path;
         let [result, endPosition, errorFound] = this.StartParser(jsonText);
 
-        return result.find((n) => n.Path == path);
+        return result.find((n) => n.Path === path);
     }
 
-    private StartParser(jsonText: string): [ParsedProperty[], number, boolean] {
+    private StartParser(jsonText: string): [JsonParsedProperty[], number, boolean] {
         this._jsonText = jsonText;
         let endPosition = 0;
         this._errorFound = false;
         this._properties = [];
 
-        if (jsonText == '') {
+        if (jsonText === '') {
             this._errorFound = this._errorFound;
             return [this._properties, endPosition, this._errorFound];
         }
@@ -124,7 +124,7 @@ export default class JsonPathParser {
                         return [pos, foundObjectType];
                     }
 
-                    let allowedChars = [' ', '\t', '\r', '\n', ','];
+                    const allowedChars = [' ', '\t', '\r', '\n', ','];
                     if (!allowedChars.includes(currentChar)) {
                         foundObjectType = JsonPropertyType.Error;
                         this._errorFound = true;
@@ -141,10 +141,10 @@ export default class JsonPathParser {
     private GetComment(pos: number, currentPath: string): number {
         if (this._searchMode) {
             let lastItem = this._properties[this._properties.length - 1];
-            if (lastItem.Path == this._searchPath) {
+            if (lastItem.Path === this._searchPath) {
                 if (this.SearchStartOnly
-                    || (lastItem.JsonPropertyType != JsonPropertyType.Array
-                        && lastItem.JsonPropertyType != JsonPropertyType.Object)) {
+                    || (lastItem.JsonPropertyType !== JsonPropertyType.Array
+                        && lastItem.JsonPropertyType !== JsonPropertyType.Object)) {
                     this._errorFound = true;
                     return pos;
                 }
@@ -154,7 +154,7 @@ export default class JsonPathParser {
             }
         }
 
-        let newElement = new ParsedProperty(this.JsonPathDivider);
+        let newElement = new JsonParsedProperty(this.JsonPathDivider);
         newElement.JsonPropertyType = JsonPropertyType.Comment;
         newElement.StartPosition = pos;
         newElement.Path = currentPath;
@@ -168,7 +168,7 @@ export default class JsonPathParser {
         }
 
         switch (this._jsonText[pos]) {
-            //single line comment
+            // single line comment
             case '/':
                 pos++;
                 if (pos >= this._jsonText.length) {
@@ -177,7 +177,7 @@ export default class JsonPathParser {
                 }
 
                 for (; (pos < this._jsonText.length); pos++) {
-                    if (this._endOfLineChars.includes(this._jsonText[pos])) { //end of comment
+                    if (this._endOfLineChars.includes(this._jsonText[pos])) { // end of comment
                         pos--;
                         newElement.EndPosition = pos;
                         newElement.Value = this._jsonText.substring(newElement.StartPosition,
@@ -202,14 +202,14 @@ export default class JsonPathParser {
                 }
 
                 for (; pos < this._jsonText.length; pos++) {
-                    if (this._jsonText[pos] == '*') { // possible end of comment
+                    if (this._jsonText[pos] === '*') { // possible end of comment
                         pos++;
                         if (pos >= this._jsonText.length) {
                             this._errorFound = true;
                             return pos;
                         }
 
-                        if (this._jsonText[pos] == '/') {
+                        if (this._jsonText[pos] === '/') {
                             newElement.EndPosition = pos;
                             newElement.Value = this._jsonText.substring(newElement.StartPosition,
                                 newElement.EndPosition + 1);
@@ -232,10 +232,10 @@ export default class JsonPathParser {
     private GetPropertyName(pos: number, currentPath: string): number {
         if (this._searchMode) {
             let lastItem = this._properties[this._properties.length - 1];
-            if (lastItem.Path == this._searchPath) {
+            if (lastItem.Path === this._searchPath) {
                 if (this.SearchStartOnly
-                    || (lastItem.JsonPropertyType != JsonPropertyType.Array
-                        && lastItem.JsonPropertyType != JsonPropertyType.Object)) {
+                    || (lastItem.JsonPropertyType !== JsonPropertyType.Array
+                        && lastItem.JsonPropertyType !== JsonPropertyType.Object)) {
                     this._errorFound = true;
 
                     return pos;
@@ -246,13 +246,13 @@ export default class JsonPathParser {
             }
         }
 
-        let newElement = new ParsedProperty(this.JsonPathDivider);
+        let newElement = new JsonParsedProperty(this.JsonPathDivider);
         newElement.StartPosition = pos;
         this._properties.push(newElement);
         pos++;
         for (; pos < this._jsonText.length; pos++) { // searching for property name end
             let currentChar = this._jsonText[pos];
-            if (currentChar == '\\') { //skip escape chars
+            if (currentChar === '\\') { // skip escape chars
                 pos++;
                 if (pos >= this._jsonText.length) {
                     this._errorFound = true;
@@ -261,7 +261,7 @@ export default class JsonPathParser {
                 }
 
                 if (this._escapeChars.includes(this._jsonText[pos])) {
-                    if (this._jsonText[pos] == 'u') { // if \u0000
+                    if (this._jsonText[pos] === 'u') { // if \u0000
                         pos += 4;
                     }
                 }
@@ -271,7 +271,7 @@ export default class JsonPathParser {
                     return pos;
                 }
             }
-            else if (currentChar == '\"') { // end of property name found
+            else if (currentChar === '\"') { // end of property name found
                 let newName = this._jsonText.substring(newElement.StartPosition,
                     pos + 1);
                 pos++;
@@ -286,13 +286,13 @@ export default class JsonPathParser {
                     return pos;
                 }
 
-                if (this._jsonText[pos] == ',' || this._jsonText[pos] == ']') { // it's an array of values
+                if (this._jsonText[pos] === ',' || this._jsonText[pos] === ']') { // it's an array of values
                     pos--;
                     newElement.JsonPropertyType = JsonPropertyType.ArrayValue;
                     newElement.EndPosition = pos;
                     newElement.Path = currentPath;
                     newElement.ValueType = this.GetVariableType(newName);
-                    if (newElement.ValueType == JsonValueType.String) {
+                    if (newElement.ValueType === JsonValueType.String) {
                         newElement.Value = this.TrimChar(newName, '\"')
                     }
                     else {
@@ -319,7 +319,7 @@ export default class JsonPathParser {
                 currentPath = currentPath + this.JsonPathDivider + newElement.Name;
                 newElement.Path = currentPath;
                 switch (this._jsonText[pos]) {
-                    //it's an object
+                    // it's an object
                     case '{':
                         newElement.JsonPropertyType = JsonPropertyType.Object;
                         pos = this.GetObject(pos, currentPath, false);
@@ -358,7 +358,7 @@ export default class JsonPathParser {
                             .trim();
                         newElement.ValueType = this.GetVariableType(newValue);
 
-                        if (newElement.ValueType == JsonValueType.String) {
+                        if (newElement.ValueType === JsonValueType.String) {
                             newElement.Value = this.TrimChar(newValue, '\"');
                         }
                         else {
@@ -403,7 +403,7 @@ export default class JsonPathParser {
     }
 
     private GetPropertyValue(pos: number, currentPath: string): [number, number] {
-        var propertyStartPos = pos;
+        let propertyStartPos = pos;
         for (; pos < this._jsonText.length; pos++) {
             switch (this._jsonText[pos]) {
                 case '[':
@@ -418,7 +418,7 @@ export default class JsonPathParser {
                 case '\"':
                     pos++;
                     for (; pos < this._jsonText.length; pos++) {
-                        if (this._jsonText[pos] == '\\') {
+                        if (this._jsonText[pos] === '\\') {
                             pos++;
                             if (pos >= this._jsonText.length) {
                                 this._errorFound = true;
@@ -427,7 +427,7 @@ export default class JsonPathParser {
                             }
 
                             if (this._escapeChars.includes(this._jsonText[pos])) {
-                                if (this._jsonText[pos] == 'u') { // if \u0000
+                                if (this._jsonText[pos] === 'u') { // if \u0000
                                     pos += 4;
                                 }
 
@@ -438,7 +438,7 @@ export default class JsonPathParser {
                                 return [pos, propertyStartPos];
                             }
                         }
-                        else if (this._jsonText[pos] == '\"') {
+                        else if (this._jsonText[pos] === '\"') {
                             return [pos, propertyStartPos];
                         }
                         else if (this._endOfLineChars.includes(this._jsonText[pos])) { // check restricted chars
@@ -455,7 +455,7 @@ export default class JsonPathParser {
                     if (!this._allowedSpacerChars.includes(this._jsonText[pos])) // it's a property non-string value
                     {
                         //  ??? check this
-                        let endingChars = [',', ']', '}', ' ', '\t', '\r', '\n', '/'];
+                        const endingChars = [',', ']', '}', ' ', '\t', '\r', '\n', '/'];
                         for (; pos < this._jsonText.length; pos++) {
                             // value end found
                             if (endingChars.includes(this._jsonText[pos])) {
@@ -511,7 +511,7 @@ export default class JsonPathParser {
                     pos = this.GetArray(pos, currentPath);
                     break;
                 case JsonPropertyType.EndOfArray:
-                    if (this._searchMode && currentPath == this._searchPath) {
+                    if (this._searchMode && currentPath === this._searchPath) {
                         this._errorFound = true;
                     }
 
@@ -534,10 +534,10 @@ export default class JsonPathParser {
     private GetObject(pos: number, currentPath: string, save: boolean = true): number {
         if (this._searchMode) {
             let lastItem = this._properties[this._properties.length - 1];
-            if (lastItem.Path == this._searchPath) {
+            if (lastItem.Path === this._searchPath) {
                 if (this.SearchStartOnly
-                    || (lastItem.JsonPropertyType != JsonPropertyType.Array
-                        && lastItem.JsonPropertyType != JsonPropertyType.Object)) {
+                    || (lastItem.JsonPropertyType !== JsonPropertyType.Array
+                        && lastItem.JsonPropertyType !== JsonPropertyType.Object)) {
                     this._errorFound = true;
 
                     return pos;
@@ -549,7 +549,7 @@ export default class JsonPathParser {
             }
         }
 
-        let newElement = new ParsedProperty(this.JsonPathDivider);
+        let newElement = new JsonParsedProperty(this.JsonPathDivider);
         if (save) {
             newElement.StartPosition = pos;
             newElement.JsonPropertyType = JsonPropertyType.Object;
@@ -591,7 +591,7 @@ export default class JsonPathParser {
                             }
                         }
 
-                        if (this._searchMode && currentPath == this._searchPath) {
+                        if (this._searchMode && currentPath === this._searchPath) {
                             this._errorFound = true;
 
                             return pos;
@@ -617,10 +617,10 @@ export default class JsonPathParser {
     private GetKeywordOrNumber(pos: number, currentPath: string, isArray: boolean): number {
         if (this._searchMode) {
             let lastItem = this._properties[this._properties.length - 1];
-            if (lastItem.Path == this._searchPath) {
+            if (lastItem.Path === this._searchPath) {
                 if (this.SearchStartOnly
-                    || (lastItem.JsonPropertyType != JsonPropertyType.Array
-                        && lastItem.JsonPropertyType != JsonPropertyType.Object)) {
+                    || (lastItem.JsonPropertyType !== JsonPropertyType.Array
+                        && lastItem.JsonPropertyType !== JsonPropertyType.Object)) {
                     this._errorFound = true;
                     return pos;
                 }
@@ -631,10 +631,10 @@ export default class JsonPathParser {
 
         }
 
-        let newElement = new ParsedProperty(this.JsonPathDivider);
+        let newElement = new JsonParsedProperty(this.JsonPathDivider);
         newElement.StartPosition = pos;
         this._properties.push(newElement);
-        let endingChars = [',', '}', ']', '\r', '\n', '/'];
+        const endingChars = [',', '}', ']', '\r', '\n', '/'];
 
         for (; pos < this._jsonText.length; pos++) { // searching for token end
             let currentChar = this._jsonText[pos];
@@ -686,14 +686,14 @@ export default class JsonPathParser {
     public GetVariableType(str: string): JsonValueType {
         let type = JsonValueType.Unknown;
 
-        if (str != '') {
+        if (str !== '') {
             if (str.length > 1 && str.startsWith('\"') && str.endsWith('\"')) {
                 type = JsonValueType.String;
             }
-            else if (str == "null") {
+            else if (str === "null") {
                 type = JsonValueType.Null;
             }
-            else if (str == "true" || str == "false") {
+            else if (str === "true" || str === "false") {
                 type = JsonValueType.Boolean;
             }
             else if (this.IsNumeric(str)) {
@@ -718,7 +718,7 @@ export default class JsonPathParser {
     }
 
     public TrimBracketedValue(text: string, startChar: string, endChar: string): string {
-        if (text == '') {
+        if (text === '') {
             return text;
         }
 
@@ -760,7 +760,7 @@ export default class JsonPathParser {
 
             linesCount++;
             if (startIndex < endIndex - 1
-                && jsonText[startIndex] != jsonText[startIndex + 1]
+                && jsonText[startIndex] !== jsonText[startIndex + 1]
                 && this._endOfLineChars.includes(jsonText[startIndex + 1])) {
                 startIndex++;
             }
@@ -772,7 +772,7 @@ export default class JsonPathParser {
     public CountLinesFast(jsonText: string, startIndex: number, endIndex: number): number {
         let count = 0;
 
-        while (jsonText.indexOf('\n', startIndex) != -1 && startIndex < endIndex) {
+        while (jsonText.indexOf('\n', startIndex) !== -1 && startIndex < endIndex) {
             count++;
             startIndex++;
         }
@@ -780,8 +780,8 @@ export default class JsonPathParser {
         return count;
     }
 
-    public ConvertForTreeProcessing(schemaProperties: ParsedProperty[]): ParsedProperty[] {
-        let result: ParsedProperty[] = [];
+    public ConvertForTreeProcessing(schemaProperties: JsonParsedProperty[]): JsonParsedProperty[] {
+        let result: JsonParsedProperty[] = [];
 
         for (let property of schemaProperties) {
             let tmpStr = property.Path;
@@ -792,7 +792,7 @@ export default class JsonPathParser {
                 pos = tmpStr.indexOf('[', pos + 2);
             }
 
-            let newProperty = new ParsedProperty(this.JsonPathDivider);
+            let newProperty = new JsonParsedProperty(this.JsonPathDivider);
             newProperty.Name = property.Name;
             newProperty.Path = tmpStr;
             newProperty.JsonPropertyType = property.JsonPropertyType;
@@ -807,16 +807,16 @@ export default class JsonPathParser {
         return result;
     }
 
-    private TrimChar(string: string, charToRemove: string): string {
-        while (string.charAt(0) == charToRemove) {
-            string = string.substring(1);
+    private TrimChar(text: string, charToRemove: string): string {
+        while (text.charAt(0) === charToRemove) {
+            text = text.substring(1);
         }
 
-        while (string.charAt(string.length - 1) == charToRemove) {
-            string = string.substring(0, string.length - 1);
+        while (text.charAt(text.length - 1) === charToRemove) {
+            text = text.substring(0, text.length - 1);
         }
 
-        return string;
+        return text;
     }
 
     private IsNumeric(str: string): boolean {

@@ -17,7 +17,7 @@ export default class ParsedProperty {
 
     private _path: string = "";
     public set Path(value: string) {
-        this._parentPath == null;
+        this._parentPath = null;
         this._path = value;
     }
 
@@ -36,8 +36,8 @@ export default class ParsedProperty {
     }
 
     public get RawLength(): number {
-        if (((this.StartPosition == -1)
-            || (this.EndPosition == -1))) {
+        if (((this.StartPosition === -1)
+            || (this.EndPosition === -1))) {
             return -1;
         }
 
@@ -46,8 +46,7 @@ export default class ParsedProperty {
     }
 
     private static TrimPathEnd(originalPath: string, levels: number, pathDivider: string): string {
-        for (
-            ; levels > 0; levels--) {
+        for (; levels > 0; levels--) {
             let pos = originalPath.lastIndexOf(pathDivider);
             if ((pos >= 0)) {
                 originalPath = originalPath.substring(0, pos);

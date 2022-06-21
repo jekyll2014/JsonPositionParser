@@ -1,13 +1,13 @@
 import { readFileSync } from 'fs';
-import JsonPathParser from './JsonPathParserLib';
+import JsonPathParser from './JsonPathParserLib/JsonPathParserLib';
 
 let parser = new JsonPathParser('/');
-//parser.TrimComplexValues = true;
-//parser.SaveComplexValues = true;
+// parser.TrimComplexValues = true;
+// parser.SaveComplexValues = true;
 const fileText = readFileSync('./sample.json', 'utf-8');
 let [jsonProperties, endPosition, errorFound] = parser.ParseJsonToPathList(fileText);
 
-//let convertedProperties = parser.ConvertForTreeProcessing(jsonProperties);
+// let convertedProperties = parser.ConvertForTreeProcessing(jsonProperties);
 
 console.log(`File length: ${fileText.length}`);
 console.log(`Last checked position: ${endPosition}`);
