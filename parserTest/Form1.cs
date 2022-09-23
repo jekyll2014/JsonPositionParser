@@ -197,6 +197,7 @@ namespace parserTest
             textBox_name.Text = "";
             textBox_value.Text = "";
             textBox_path.Text = "";
+            textBox_depth.Text = "";
             textBox_propertyType.Text = "";
             textBox_valueType.Text = "";
             textBox_startPos.Text = "";
@@ -211,10 +212,10 @@ namespace parserTest
             var startPos = item.StartPosition;
             var endPos = item.EndPosition;
 
-
             textBox_name.Text = item.Name;
             textBox_value.Text = item.Value;
             textBox_path.Text = item.Path;
+            textBox_depth.Text = item.Depth.ToString();
             textBox_propertyType.Text = item.JsonPropertyType.ToString();
             textBox_valueType.Text = item.ValueType.ToString();
             textBox_startPos.Text = item.StartPosition.ToString();

@@ -51,6 +51,17 @@
             }
         }
 
+        public int Depth
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_path))
+                    return 0;
+
+                return _path.Split(PathDivider).Length;
+            }
+        }
+
         private static string TrimPathEnd(string originalPath, int levels, char pathDivider)
         {
             for (; levels > 0; levels--)
