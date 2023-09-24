@@ -27,7 +27,8 @@ namespace JsonPathParserLib
         public string RootName { get; set; } = "root";
         public bool SearchStartOnly { get; set; }
 
-        public IEnumerable<ParsedProperty> ParseJsonToPathList(string jsonText, out int endPosition, out bool errorFound)
+        public IEnumerable<ParsedProperty> ParseJsonToPathList(string jsonText, out int endPosition,
+            out bool errorFound)
         {
             _searchMode = false;
             _searchPath = string.Empty;
@@ -53,7 +54,8 @@ namespace JsonPathParserLib
             return items.FirstOrDefault(n => n.Path == path);
         }
 
-        public static bool GetLinesNumber(string jsonText, int startPosition, int endPosition, out int startLine, out int endLine)
+        public static bool GetLinesNumber(string jsonText, int startPosition, int endPosition, out int startLine,
+            out int endLine)
         {
             startLine = CountLinesFast(jsonText, 0, startPosition) + 1;
             endLine = startLine + CountLinesFast(jsonText, startPosition, endPosition);
@@ -69,7 +71,7 @@ namespace JsonPathParserLib
             {
                 type = JsonValueType.Unknown;
             }
-            else if (str.Length > 1 && str[0] == ('\"') && str[str.Length - 1] == ('\"'))
+            else if (str.Length > 1 && str[0] == '\"' && str[str.Length - 1] == '\"')
             {
                 type = JsonValueType.String;
             }
@@ -103,22 +105,16 @@ namespace JsonPathParserLib
         public static string TrimBracketedValue(string text, char startChar, char endChar)
         {
             if (string.IsNullOrEmpty(text))
-            {
                 return text;
-            }
 
             var startPosition = text.IndexOf(startChar);
             var endPosition = text.LastIndexOf(endChar);
 
             if (startPosition < 0 || endPosition <= 0 || endPosition <= startPosition)
-            {
                 return text;
-            }
 
             if (endPosition - startPosition <= 1)
-            {
                 return string.Empty;
-            }
 
             return text.Substring(startPosition + 1, endPosition - startPosition - 1).Trim();
         }
@@ -165,20 +161,21 @@ namespace JsonPathParserLib
         {
             var count = 0;
             while ((startIndex = jsonText.IndexOf('\n', startIndex)) != -1
-                && startIndex < endIndex)
+                   && startIndex < endIndex)
             {
                 count++;
                 startIndex++;
             }
+
             return count;
         }
 
         public IEnumerable<ParsedProperty> ConvertForTreeProcessing(IEnumerable<ParsedProperty> schemaProperties)
         {
-            if (schemaProperties == null)
-                return null;
-
             var result = new List<ParsedProperty>();
+
+            if (schemaProperties == null || !schemaProperties.Any())
+                return result;
 
             foreach (var property in schemaProperties)
             {
@@ -316,7 +313,7 @@ namespace JsonPathParserLib
                 {
                     if (SearchStartOnly
                         || (lastItem?.JsonPropertyType != JsonPropertyType.Array
-                        && lastItem?.JsonPropertyType != JsonPropertyType.Object))
+                            && lastItem?.JsonPropertyType != JsonPropertyType.Object))
                     {
                         _errorFound = true;
                         return pos;
@@ -428,7 +425,7 @@ namespace JsonPathParserLib
                 {
                     if (SearchStartOnly
                         || (lastItem?.JsonPropertyType != JsonPropertyType.Array
-                        && lastItem?.JsonPropertyType != JsonPropertyType.Object))
+                            && lastItem?.JsonPropertyType != JsonPropertyType.Object))
                     {
                         _errorFound = true;
                         return pos;
@@ -485,9 +482,7 @@ namespace JsonPathParserLib
                     pos = GetPropertyDivider(pos, currentPath);
 
                     if (_errorFound)
-                    {
                         return pos;
-                    }
 
                     if (_jsonText[pos] == ',' || _jsonText[pos] == ']') // it's an array of values
                     {
@@ -511,9 +506,7 @@ namespace JsonPathParserLib
                     var valueStartPosition = pos;
                     pos = GetPropertyValue(pos, currentPath, ref valueStartPosition);
                     if (_errorFound)
-                    {
                         return pos;
-                    }
 
                     currentPath += JsonPathDivider + newElement.Name;
                     newElement.Path = currentPath;
@@ -528,12 +521,10 @@ namespace JsonPathParserLib
                             if (SaveComplexValues)
                             {
                                 newElement.Value = _jsonText.Substring(newElement.StartPosition,
-                                newElement.EndPosition - newElement.StartPosition + 1);
+                                    newElement.EndPosition - newElement.StartPosition + 1);
 
                                 if (TrimComplexValues)
-                                {
                                     newElement.Value = TrimObjectValue(newElement.Value);
-                                }
                             }
 
                             return pos;
@@ -548,10 +539,7 @@ namespace JsonPathParserLib
                                 newElement.Value = _jsonText.Substring(newElement.StartPosition,
                                     newElement.EndPosition - newElement.StartPosition + 1);
 
-                                if (TrimComplexValues)
-                                {
-                                    newElement.Value = TrimArrayValue(newElement.Value);
-                                }
+                                if (TrimComplexValues) newElement.Value = TrimArrayValue(newElement.Value);
                             }
 
                             return pos;
@@ -563,7 +551,9 @@ namespace JsonPathParserLib
                                 .Substring(valueStartPosition, pos - valueStartPosition + 1)
                                 .Trim();
                             newElement.ValueType = GetVariableType(newValue);
-                            newElement.Value = newElement.ValueType == JsonValueType.String ? newValue.Trim('\"') : newValue;
+                            newElement.Value = newElement.ValueType == JsonValueType.String
+                                ? newValue.Trim('\"')
+                                : newValue;
                             return pos;
                     }
                 }
@@ -597,6 +587,7 @@ namespace JsonPathParserLib
                             _errorFound = true;
                             return pos;
                         }
+
                         break;
                 }
             }
@@ -687,6 +678,7 @@ namespace JsonPathParserLib
                                 }
                             }
                         }
+
                         break;
                 }
             }
@@ -703,9 +695,7 @@ namespace JsonPathParserLib
             {
                 pos = FindStartOfNextToken(pos, out var foundObjectType);
                 if (_errorFound)
-                {
                     return pos;
-                }
 
                 switch (foundObjectType)
                 {
@@ -730,9 +720,7 @@ namespace JsonPathParserLib
                         break;
                     case JsonPropertyType.EndOfArray:
                         if (_searchMode && currentPath == _searchPath)
-                        {
                             _errorFound = true;
-                        }
                         return pos;
                     default:
                         _errorFound = true;
@@ -740,12 +728,11 @@ namespace JsonPathParserLib
                 }
 
                 if (_errorFound)
-                {
                     return pos;
-                }
             }
 
             _errorFound = true;
+
             return pos;
         }
 
@@ -758,7 +745,7 @@ namespace JsonPathParserLib
                 {
                     if (SearchStartOnly
                         || (lastItem?.JsonPropertyType != JsonPropertyType.Array
-                        && lastItem?.JsonPropertyType != JsonPropertyType.Object))
+                            && lastItem?.JsonPropertyType != JsonPropertyType.Object))
                     {
                         _errorFound = true;
                         return pos;
@@ -787,9 +774,7 @@ namespace JsonPathParserLib
             {
                 pos = FindStartOfNextToken(pos, out var foundObjectType);
                 if (_errorFound)
-                {
                     return pos;
-                }
 
                 switch (foundObjectType)
                 {
@@ -815,9 +800,7 @@ namespace JsonPathParserLib
                                     newElement.EndPosition - newElement.StartPosition + 1);
 
                                 if (TrimComplexValues)
-                                {
                                     newElement.Value = TrimObjectValue(newElement.Value);
-                                }
                             }
 
                             if (_searchMode && currentPath == _searchPath)
@@ -834,12 +817,11 @@ namespace JsonPathParserLib
                 }
 
                 if (_errorFound)
-                {
                     return pos;
-                }
             }
 
             _errorFound = true;
+
             return pos;
         }
 
@@ -852,7 +834,7 @@ namespace JsonPathParserLib
                 {
                     if (SearchStartOnly
                         || (lastItem?.JsonPropertyType != JsonPropertyType.Array
-                        && lastItem?.JsonPropertyType != JsonPropertyType.Object))
+                            && lastItem?.JsonPropertyType != JsonPropertyType.Object))
                     {
                         _errorFound = true;
                         return pos;
@@ -911,7 +893,7 @@ namespace JsonPathParserLib
 
         private static bool IsNumeric(string str)
         {
-            return Double.TryParse(str, out double _);
+            return double.TryParse(str, out var _);
         }
     }
 }

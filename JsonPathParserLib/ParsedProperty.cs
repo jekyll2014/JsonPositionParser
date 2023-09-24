@@ -8,21 +8,22 @@
         public string Value = "";
         public JsonPropertyType JsonPropertyType = JsonPropertyType.Unknown;
         public JsonValueType ValueType;
-        public char PathDivider = '.';
+        public char PathDivider { get; private set; }
         private string _path = "";
+
         public string Path
         {
             get => _path;
             set
             {
-                _parentPath = null;
+                _parentPath = string.Empty;
                 _path = value;
             }
         }
 
         private string _parentPath;
 
-        public ParsedProperty(char pathDivider)
+        public ParsedProperty(char pathDivider = '.')
         {
             PathDivider = pathDivider;
         }
@@ -31,10 +32,8 @@
         {
             get
             {
-                if (_parentPath == null)
-                {
+                if (string.IsNullOrEmpty(_parentPath))
                     _parentPath = TrimPathEnd(Path, 1, PathDivider);
-                }
 
                 return _parentPath;
             }
@@ -68,9 +67,7 @@
             {
                 var pos = originalPath.LastIndexOf(pathDivider);
                 if (pos >= 0)
-                {
                     originalPath = originalPath.Substring(0, pos);
-                }
                 else
                     break;
             }

@@ -110,6 +110,7 @@ namespace parserTest
                     text = text.Replace((char)160, (char)32);
                     errors.Add((file, "&nbsp char in the file"));
                 }
+
                 var pos = -1;
                 var errorFound = false;
                 ParsedProperty[] pathList = null;
@@ -133,9 +134,7 @@ namespace parserTest
 
                 // parsing failed
                 if (errorFound)
-                {
                     errors.Add((file, $"Error parsing file at position {pos}"));
-                }
 
                 if (pathList == null)
                     continue;
@@ -143,9 +142,8 @@ namespace parserTest
                 // not failed but have incorrect positions
                 var incorrectPositions = pathList.Where(n => n.EndPosition < 0 || n.StartPosition < 0).ToArray();
                 if (incorrectPositions.Any())
-                {
-                    errors.AddRange(incorrectPositions.Select(item => (file, $"Incorrect [{item.Path}] object positions: start [{item.StartPosition}], end [{item.EndPosition}]")));
-                }
+                    errors.AddRange(incorrectPositions.Select(item => (file,
+                        $"Incorrect [{item.Path}] object positions: start [{item.StartPosition}], end [{item.EndPosition}]")));
 
                 // find duplicate json paths
                 var duplicatePaths = pathList.Where(n =>
@@ -156,10 +154,12 @@ namespace parserTest
 
                 if (!duplicatePaths.Any()) continue;
 
-                errors.AddRange(from path in duplicatePaths from dupItem in path select (file, $"Duplicate path {dupItem.Path} at position {dupItem.StartPosition}"));
+                errors.AddRange(duplicatePaths.SelectMany(path => path,
+                    (path, dupItem) => (file, $"Duplicate path {dupItem.Path} at position {dupItem.StartPosition}")));
             }
 
-            var errorMessages = errors.Aggregate(string.Empty, (current, item) => current + $"{item.file}: {item.message}{Environment.NewLine}");
+            var errorMessages = errors.Aggregate(string.Empty,
+                (current, item) => current + $"{item.file}: {item.message}{Environment.NewLine}");
 
             if (!string.IsNullOrEmpty(errorMessages))
             {
@@ -221,7 +221,8 @@ namespace parserTest
             textBox_startPos.Text = item.StartPosition.ToString();
             textBox_endPos.Text = item.EndPosition.ToString();
 
-            JsonPathParser.GetLinesNumber(textBox.Text, item.StartPosition, item.EndPosition, out var startLine, out var endLine);
+            JsonPathParser.GetLinesNumber(textBox.Text, item.StartPosition, item.EndPosition, out var startLine,
+                out var endLine);
             textBox_startLine.Text = startLine.ToString();
             textBox_endLine.Text = endLine.ToString();
 
@@ -239,7 +240,7 @@ namespace parserTest
         private TreeNode[] ConvertPathListToTree(IEnumerable<ParsedProperty> pathList)
         {
             if (pathList == null)
-                return null;
+                return Array.Empty<TreeNode>();
 
             pathList = _parser.ConvertForTreeProcessing(pathList);
 
@@ -273,9 +274,7 @@ namespace parserTest
                     }
 
                     if (tmpPath.ToString() == RootName + _pathDivider && itemPath != RootName)
-                    {
                         continue;
-                    }
 
                     if (itemPath == RootName)
                     {
