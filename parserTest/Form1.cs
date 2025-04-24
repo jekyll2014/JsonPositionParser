@@ -15,12 +15,11 @@ namespace parserTest
         private const string RootName = "<root>";
         private char _pathDivider = '.';
         private JsonPathParser _parser;
-        private string logFileName = "_bad_file.txt";
+        private readonly string logFileName = "_bad_file.txt";
 
         public Form1()
         {
             InitializeComponent();
-            //listBox1.DisplayMember = "Path";
         }
 
         private void Button_open_Click(object sender, EventArgs e)
@@ -37,22 +36,23 @@ namespace parserTest
             listBox1.DataSource = null;
             listBox1.Items.Clear();
             treeView1.Nodes.Clear();
+            textBox_errorMessage.Clear();
 
-            //textBox.Text = JsonIO.BeautifyJson(File.ReadAllText(openFileDialog.FileName), true);
-            var jsonText = File.ReadAllText(openFileDialog.FileName).Replace(' ', ' ');
+            var jsonText = File.ReadAllText(openFileDialog.FileName);
             textBox.Text = jsonText;
             Text = openFileDialog.FileName;
             var pos = -1;
-            var errorFound = false;
+            var errorFound = string.Empty;
             _pathDivider = treeView1.PathSeparator.FirstOrDefault();
             ParsedProperty[] pathList = null;
 
             _parser = new JsonPathParser
             {
+                JsonPathDivider = _pathDivider,
+                RootName = RootName,
                 TrimComplexValues = false,
                 SaveComplexValues = true,
-                RootName = RootName,
-                JsonPathDivider = _pathDivider
+                KeepComments = true,
             };
 
             try
@@ -64,9 +64,11 @@ namespace parserTest
                 MessageBox.Show("Exception: " + ex);
             }
 
-            if (errorFound)
+            if (!string.IsNullOrEmpty(errorFound))
             {
-                MessageBox.Show("Error parsing file at position: " + pos.ToString());
+                var message = $"Error parsing file at position {pos}: {errorFound}";
+                textBox_errorMessage.Text = message;
+                MessageBox.Show(message);
                 textBox.SelectionStart = pos;
                 textBox.SelectionLength = textBox.Text.Length - pos + 1;
                 textBox.ScrollToCaret();
@@ -74,7 +76,6 @@ namespace parserTest
             }
 
             listBox1.DataSource = pathList;
-
             var rootNodes = ConvertPathListToTree(pathList);
             if (rootNodes != null)
                 treeView1.Nodes.AddRange(rootNodes);
@@ -112,15 +113,16 @@ namespace parserTest
                 }
 
                 var pos = -1;
-                var errorFound = false;
+                var errorFound = string.Empty;
                 ParsedProperty[] pathList = null;
 
                 var parser = new JsonPathParser
                 {
+                    JsonPathDivider = _pathDivider,
+                    RootName = RootName,
                     TrimComplexValues = false,
                     SaveComplexValues = true,
-                    RootName = RootName,
-                    JsonPathDivider = _pathDivider
+                    KeepComments = true,
                 };
 
                 try
@@ -129,12 +131,12 @@ namespace parserTest
                 }
                 catch (Exception ex)
                 {
-                    errors.Add((file, $"Exception parsing file: {ex.Message} at position {pos}"));
+                    errors.Add((file, $"Exception parsing file: {file} at position {pos}:  {ex.Message}"));
                 }
 
                 // parsing failed
-                if (errorFound)
-                    errors.Add((file, $"Error parsing file at position {pos}"));
+                if (!string.IsNullOrEmpty(errorFound))
+                    errors.Add((file, $"Error parsing file at position {pos}: {errorFound}"));
 
                 if (pathList == null)
                     continue;
@@ -146,13 +148,14 @@ namespace parserTest
                         $"Incorrect [{item.Path}] object positions: start [{item.StartPosition}], end [{item.EndPosition}]")));
 
                 // find duplicate json paths
-                var duplicatePaths = pathList.Where(n =>
-                        n.JsonPropertyType != JsonPropertyType.Comment)
-                    .ToArray()
+                var duplicatePaths = pathList
+                    .Where(n => n.JsonPropertyType != JsonPropertyType.Comment)
                     .GroupBy(n => n.Path)
-                    .Where(n => n.Count() > 1).ToArray();
+                    .Where(n => n.Count() > 1)
+                    .ToArray();
 
-                if (!duplicatePaths.Any()) continue;
+                if (!duplicatePaths.Any())
+                    continue;
 
                 errors.AddRange(duplicatePaths.SelectMany(path => path,
                     (path, dupItem) => (file, $"Duplicate path {dupItem.Path} at position {dupItem.StartPosition}")));
@@ -229,6 +232,7 @@ namespace parserTest
             textBox.SelectionLength = 0;
             if (startPos < 0 || startPos >= textBox.TextLength)
                 return;
+
             if (endPos < 0 || endPos >= textBox.TextLength)
                 return;
 
@@ -269,7 +273,6 @@ namespace parserTest
                             Name = tmpPath.ToString()
                         };
                         node.Nodes.Add(newNode);
-                        //tmpNode = newNode;
                         continue;
                     }
 
@@ -285,7 +288,6 @@ namespace parserTest
                         };
 
                         node.Nodes.Add(newNode);
-                        //tmpNode = newNode;
                     }
                     else if (!tmpNode.Nodes.ContainsKey(tmpPath.ToString()))
                     {

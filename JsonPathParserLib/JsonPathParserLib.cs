@@ -7,53 +7,61 @@ namespace JsonPathParserLib
 {
     public class JsonPathParser
     {
-        private string _jsonText;
+        public string RootName { get; set; } = "root";
+        public char JsonPathDivider { get; set; } = '.';
+        // trim spaces and brackets out of the value content text
+        public bool TrimComplexValues { get; set; } = false;
+        // Keep complex object (object, array) content to the property
+        public bool SaveComplexValues { get; set; } = false;
+        public bool SearchStartOnly { get; set; } = false;
+        // Keep comments as properties
+        public bool KeepComments { get; set; } = false;
 
+        private static readonly char[] _escapeChars = new char[] { '\"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u' };
+        private static readonly char[] _endOfLineChars = new char[] { '\r', '\n' };
+        private static readonly char[] _endingChars = new char[] { ' ', ',', '}', ']', '\t', '\r', '\n', '/' };
+        private static readonly char[] _keywordOrNumberChars = "-+0123456789E.truefalsnl".ToCharArray();
+        private static readonly string[] _keywords = { "true", "false", "null" };
+
+        private string _jsonText;
         private List<ParsedProperty> _properties = new List<ParsedProperty>();
 
-        private readonly char[] _escapeChars = new char[] { '\"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u' };
-        private readonly char[] _allowedSpacerChars = new char[] { ' ', '\t', '\r', '\n' };
-        private readonly char[] _endOfLineChars = new char[] { '\r', '\n' };
-        private readonly char[] _keywordOrNumberChars = "-0123456789.truefalsnl".ToCharArray();
-        private readonly string[] _keywords = { "true", "false", "null" };
+        private bool _searchMode = false;
+        private string _searchPath = string.Empty;
 
-        private bool _errorFound;
-        private bool _searchMode;
-        private string _searchPath;
+        // convert text to the list of JSON properties
+        public List<ParsedProperty> ParseJsonToPathList(string jsonText)
+        {
+            return ParseJsonToPathList(jsonText, out var _, out var _);
+        }
 
-        public bool TrimComplexValues { get; set; }
-        public bool SaveComplexValues { get; set; }
-        public char JsonPathDivider { get; set; } = '.';
-        public string RootName { get; set; } = "root";
-        public bool SearchStartOnly { get; set; }
-
-        public IEnumerable<ParsedProperty> ParseJsonToPathList(string jsonText, out int endPosition,
-            out bool errorFound)
+        // convert text to the list of JSON properties
+        public List<ParsedProperty> ParseJsonToPathList(string jsonText,
+            out int endPosition,
+            out string errorFound)
         {
             _searchMode = false;
             _searchPath = string.Empty;
-            var result = StartParser(jsonText, out endPosition, out errorFound);
 
-            return result;
+            return StartParser(jsonText, out endPosition, out errorFound);
         }
 
-        public IEnumerable<ParsedProperty> ParseJsonToPathList(string jsonText)
-        {
-            return StartParser(jsonText, out var _, out var _);
-        }
-
+        // look through the text to find certain path
         public ParsedProperty SearchJsonPath(string jsonText, string path)
         {
             _searchMode = true;
             _searchPath = path;
             var items = StartParser(jsonText, out var _, out var _).ToArray();
 
-            if (!items.Any())
+            if (items.Length == 0)
                 return null;
 
             return items.FirstOrDefault(n => n.Path == path);
         }
 
+        #region Utilities
+
+        // Count the number of line endings betwee start and end positions in the text
         public static bool GetLinesNumber(string jsonText, int startPosition, int endPosition, out int startLine,
             out int endLine)
         {
@@ -63,63 +71,7 @@ namespace JsonPathParserLib
             return true;
         }
 
-        public static JsonValueType GetVariableType(string str)
-        {
-            var type = JsonValueType.Unknown;
-
-            if (string.IsNullOrEmpty(str))
-            {
-                type = JsonValueType.Unknown;
-            }
-            else if (str.Length > 1 && str[0] == '\"' && str[str.Length - 1] == '\"')
-            {
-                type = JsonValueType.String;
-            }
-            else if (str == "null")
-            {
-                type = JsonValueType.Null;
-            }
-            else if (str == "true" || str == "false")
-            {
-                type = JsonValueType.Boolean;
-            }
-            else if (IsNumeric(str))
-            {
-                if (str.Contains('.')) type = JsonValueType.Number;
-                else type = JsonValueType.Integer;
-            }
-
-            return type;
-        }
-
-        public static string TrimObjectValue(string objectText)
-        {
-            return TrimBracketedValue(objectText, '{', '}');
-        }
-
-        public static string TrimArrayValue(string arrayText)
-        {
-            return TrimBracketedValue(arrayText, '[', ']');
-        }
-
-        public static string TrimBracketedValue(string text, char startChar, char endChar)
-        {
-            if (string.IsNullOrEmpty(text))
-                return text;
-
-            var startPosition = text.IndexOf(startChar);
-            var endPosition = text.LastIndexOf(endChar);
-
-            if (startPosition < 0 || endPosition <= 0 || endPosition <= startPosition)
-                return text;
-
-            if (endPosition - startPosition <= 1)
-                return string.Empty;
-
-            return text.Substring(startPosition + 1, endPosition - startPosition - 1).Trim();
-        }
-
-        // fool-proof
+        // Count the number of line endings (fool-proof)
         public static int CountLines(string jsonText, int startIndex, int endIndex)
         {
             if (startIndex >= jsonText.Length)
@@ -135,7 +87,8 @@ namespace JsonPathParserLib
             if (endIndex >= jsonText.Length)
                 endIndex = jsonText.Length;
 
-            var endOfLineChars = new List<char>() { '\r', '\n' };
+            var endOfLineChars = new List<char>();
+            endOfLineChars.AddRange(_endOfLineChars);
             endOfLineChars.AddRange(Environment.NewLine.ToCharArray());
             var linesCount = 0;
             char currentChar;
@@ -157,6 +110,7 @@ namespace JsonPathParserLib
             return linesCount;
         }
 
+        // Count the number of line endings (fast)
         public static int CountLinesFast(string jsonText, int startIndex, int endIndex)
         {
             var count = 0;
@@ -170,10 +124,10 @@ namespace JsonPathParserLib
             return count;
         }
 
+        // split all array paths (root\a[0]) to array body and array members (root\a\[0]) to simplify conversion to the tree structure
         public IEnumerable<ParsedProperty> ConvertForTreeProcessing(IEnumerable<ParsedProperty> schemaProperties)
         {
             var result = new List<ParsedProperty>();
-
             if (schemaProperties == null || !schemaProperties.Any())
                 return result;
 
@@ -205,96 +159,106 @@ namespace JsonPathParserLib
             return result;
         }
 
-        private IEnumerable<ParsedProperty> StartParser(string jsonText, out int endPosition, out bool errorFound)
+        #endregion
+
+        private List<ParsedProperty> StartParser(string jsonText, out int endPosition, out string errorFound)
         {
             _jsonText = jsonText;
             endPosition = 0;
-            _errorFound = false;
             _properties = new List<ParsedProperty>();
-
+            errorFound = string.Empty;
             if (string.IsNullOrEmpty(jsonText))
-            {
-                errorFound = _errorFound;
                 return _properties;
-            }
 
             var currentPath = RootName;
-            while (!_errorFound && endPosition < _jsonText.Length)
+            try
             {
-                endPosition = FindStartOfNextToken(endPosition, out var foundObjectType);
-                if (_errorFound || endPosition >= _jsonText.Length)
-                    break;
-
-                switch (foundObjectType)
+                while (endPosition < _jsonText.Length)
                 {
-                    case JsonPropertyType.Property:
-                        endPosition = GetPropertyName(endPosition, currentPath);
+                    endPosition = FindStartOfNextToken(endPosition, out var foundObjectType);
+                    if (endPosition >= _jsonText.Length)
                         break;
-                    case JsonPropertyType.Comment:
-                        endPosition = GetComment(endPosition, currentPath);
-                        break;
-                    case JsonPropertyType.Object:
-                        endPosition = GetObject(endPosition, currentPath);
-                        break;
-                    case JsonPropertyType.EndOfObject:
-                        break;
-                    case JsonPropertyType.Array:
-                        endPosition = GetArray(endPosition, currentPath);
-                        break;
-                    case JsonPropertyType.EndOfArray:
-                        break;
-                    default:
-                        _errorFound = true;
-                        break;
-                }
 
-                endPosition++;
+                    switch (foundObjectType)
+                    {
+                        case JsonPropertyType.Property:
+                            endPosition = GetPropertyName(endPosition, currentPath);
+                            break;
+                        case JsonPropertyType.Comment:
+                            endPosition = GetComment(endPosition, currentPath);
+                            break;
+                        case JsonPropertyType.Object:
+                            endPosition = GetObject(endPosition, currentPath);
+                            break;
+                        case JsonPropertyType.EndOfObject:
+                            break;
+                        case JsonPropertyType.Array:
+                            endPosition = GetArray(endPosition, currentPath);
+                            break;
+                        case JsonPropertyType.EndOfArray:
+                            break;
+                        default:
+                            throw new Exception($"Invalid object found: {foundObjectType}.");
+                    }
+
+                    endPosition++;
+                }
+            }
+            catch (Exception ex)
+            {
+                errorFound = ex.Message;
             }
 
-            errorFound = _errorFound;
+            if (KeepComments)
+                ReArrangeComments(_properties);
+
             return _properties;
         }
 
         private int FindStartOfNextToken(int pos, out JsonPropertyType foundObjectType)
         {
             foundObjectType = JsonPropertyType.Unknown;
-
-            for (; pos < _jsonText.Length; pos++)
+            for (; pos < _jsonText.Length; pos = IncrementPosition(pos))
             {
                 var currentChar = _jsonText[pos];
                 switch (currentChar)
                 {
                     case '/':
                         foundObjectType = JsonPropertyType.Comment;
+
                         return pos;
                     case '\"':
                         foundObjectType = JsonPropertyType.Property;
+
                         return pos;
                     case '{':
                         foundObjectType = JsonPropertyType.Object;
+
                         return pos;
                     case '}':
                         foundObjectType = JsonPropertyType.EndOfObject;
+
                         return pos;
                     case '[':
                         foundObjectType = JsonPropertyType.Array;
+
                         return pos;
                     case ']':
                         foundObjectType = JsonPropertyType.EndOfArray;
+
                         return pos;
                     default:
-                        if (_keywordOrNumberChars.Contains(currentChar))
+                        if (_keywordOrNumberChars.Contains(currentChar)) // keyword or number found
                         {
                             foundObjectType = JsonPropertyType.KeywordOrNumberProperty;
+
                             return pos;
                         }
 
-                        var allowedChars = new[] { ' ', '\t', '\r', '\n', ',' };
-                        if (!allowedChars.Contains(currentChar))
+                        if (!char.IsWhiteSpace(currentChar) && currentChar != ',') // check for not allowed chars (not white-space or comma)
                         {
                             foundObjectType = JsonPropertyType.Error;
-                            _errorFound = true;
-                            return pos;
+                            throw new Exception($"Incorrect character '{currentChar}' at position {pos}. Not a white-space or ','");
                         }
 
                         break;
@@ -311,18 +275,15 @@ namespace JsonPathParserLib
                 var lastItem = _properties?.LastOrDefault();
                 if (lastItem?.Path == _searchPath)
                 {
-                    if (SearchStartOnly
-                        || (lastItem?.JsonPropertyType != JsonPropertyType.Array
-                            && lastItem?.JsonPropertyType != JsonPropertyType.Object))
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
+                    if (SearchStartOnly)
+                        throw new Exception("Search finished");
+
+                    if (lastItem?.JsonPropertyType != JsonPropertyType.Array
+                        && lastItem?.JsonPropertyType != JsonPropertyType.Object)
+                        throw new Exception($"Incorrect property type '{lastItem?.JsonPropertyType}' at position {pos}.");
                 }
                 else
-                {
                     _properties?.Remove(_properties.LastOrDefault());
-                }
             }
 
             var newElement = new ParsedProperty(JsonPathDivider)
@@ -332,88 +293,60 @@ namespace JsonPathParserLib
                 Path = currentPath,
                 ValueType = JsonValueType.Unknown
             };
-            _properties?.Add(newElement);
 
-            pos++;
+            if (KeepComments)
+                _properties?.Add(newElement);
 
-            if (pos >= _jsonText.Length)
-            {
-                _errorFound = true;
-                return pos;
-            }
-
+            pos = IncrementPosition(pos);
             switch (_jsonText[pos])
             {
                 //single line comment
                 case '/':
+                    pos = IncrementPosition(pos);
+                    for (; pos < _jsonText.Length; pos = IncrementPosition(pos))
                     {
-                        pos++;
-                        if (pos >= _jsonText.Length)
+                        if (_endOfLineChars.Contains(_jsonText[pos])) //end of comment
                         {
-                            _errorFound = true;
+                            pos--;
+                            newElement.EndPosition = pos;
+                            newElement.Value = _jsonText.Substring(newElement.StartPosition,
+                                newElement.EndPosition - newElement.StartPosition + 1);
+
                             return pos;
                         }
+                    }
 
-                        for (; pos < _jsonText.Length; pos++)
+                    pos--;
+                    newElement.EndPosition = pos;
+                    newElement.Value = _jsonText.Substring(newElement.StartPosition);
+
+                    return pos;
+                //multi line comment
+                case '*':
+                    pos = IncrementPosition(pos);
+                    for (; pos < _jsonText.Length; pos = IncrementPosition(pos))
+                    {
+                        if (_jsonText[pos] == '*') // possible end of comment
                         {
-                            if (_endOfLineChars.Contains(_jsonText[pos])) //end of comment
+                            pos = IncrementPosition(pos);
+                            if (_jsonText[pos] == '/')
                             {
-                                pos--;
                                 newElement.EndPosition = pos;
-                                newElement.Value = _jsonText.Substring(newElement.StartPosition,
-                                    newElement.EndPosition - newElement.StartPosition - 1);
+                                newElement.Value = _jsonText.Substring(
+                                    newElement.StartPosition,
+                                    newElement.EndPosition - newElement.StartPosition + 1);
 
                                 return pos;
                             }
+
+                            pos--;
                         }
-
-                        pos--;
-                        newElement.EndPosition = pos;
-                        newElement.Value = _jsonText.Substring(newElement.StartPosition);
-
-                        return pos;
                     }
-                //multi line comment
-                case '*':
-                    {
-                        pos++;
-                        if (pos >= _jsonText.Length)
-                        {
-                            _errorFound = true;
-                            return pos;
-                        }
 
-                        for (; pos < _jsonText.Length; pos++)
-                        {
-                            if (_jsonText[pos] == '*') // possible end of comment
-                            {
-                                pos++;
-                                if (pos >= _jsonText.Length)
-                                {
-                                    _errorFound = true;
-                                    return pos;
-                                }
-
-                                if (_jsonText[pos] == '/')
-                                {
-                                    newElement.EndPosition = pos;
-                                    newElement.Value = _jsonText.Substring(
-                                        newElement.StartPosition,
-                                        newElement.EndPosition - newElement.StartPosition + 1);
-
-                                    return pos;
-                                }
-
-                                pos--;
-                            }
-                        }
-
-                        break;
-                    }
+                    break;
             }
 
-            _errorFound = true;
-            return pos;
+            throw new Exception($"Incorrect comment at position {pos}.");
         }
 
         private int GetPropertyName(int pos, string currentPath)
@@ -423,67 +356,43 @@ namespace JsonPathParserLib
                 var lastItem = _properties?.LastOrDefault();
                 if (lastItem?.Path == _searchPath)
                 {
-                    if (SearchStartOnly
-                        || (lastItem?.JsonPropertyType != JsonPropertyType.Array
-                            && lastItem?.JsonPropertyType != JsonPropertyType.Object))
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
+                    if (SearchStartOnly)
+                        throw new Exception($"Search finished");
+
+                    if (lastItem?.JsonPropertyType != JsonPropertyType.Array
+                        && lastItem?.JsonPropertyType != JsonPropertyType.Object)
+                        throw new Exception("Search finished");
                 }
                 else
-                {
                     _properties?.Remove(_properties.LastOrDefault());
-                }
             }
 
             var newElement = new ParsedProperty(JsonPathDivider)
             {
                 StartPosition = pos
             };
-            _properties?.Add(newElement);
 
-            pos++;
-            for (; pos < _jsonText.Length; pos++) // searching for property name end
+            _properties?.Add(newElement);
+            pos = IncrementPosition(pos);
+            for (; pos < _jsonText.Length; pos = IncrementPosition(pos)) // searching for property name end
             {
                 var currentChar = _jsonText[pos];
-
                 if (currentChar == '\\') //skip escape chars
                 {
-                    pos++;
-                    if (pos >= _jsonText.Length)
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
-
+                    pos = IncrementPosition(pos);
                     if (_escapeChars.Contains(_jsonText[pos]))
                     {
                         if (_jsonText[pos] == 'u') // if \u0000
                             pos += 4;
                     }
                     else
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
+                        break;
                 }
                 else if (currentChar == '\"') // end of property name found
                 {
                     var newName = _jsonText.Substring(newElement.StartPosition, pos - newElement.StartPosition + 1);
-                    pos++;
-
-                    if (pos >= _jsonText.Length)
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
-
+                    pos = IncrementPosition(pos);
                     pos = GetPropertyDivider(pos, currentPath);
-
-                    if (_errorFound)
-                        return pos;
-
                     if (_jsonText[pos] == ',' || _jsonText[pos] == ']') // it's an array of values
                     {
                         pos--;
@@ -492,22 +401,14 @@ namespace JsonPathParserLib
                         newElement.Path = currentPath;
                         newElement.ValueType = GetVariableType(newName);
                         newElement.Value = newElement.ValueType == JsonValueType.String ? newName.Trim('\"') : newName;
+
                         return pos;
                     }
 
                     newElement.Name = newName.Trim('\"');
-                    pos++;
-                    if (pos >= _jsonText.Length)
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
-
+                    pos = IncrementPosition(pos);
                     var valueStartPosition = pos;
                     pos = GetPropertyValue(pos, currentPath, ref valueStartPosition);
-                    if (_errorFound)
-                        return pos;
-
                     currentPath += JsonPathDivider + newElement.Name;
                     newElement.Path = currentPath;
                     switch (_jsonText[pos])
@@ -517,7 +418,6 @@ namespace JsonPathParserLib
                             newElement.JsonPropertyType = JsonPropertyType.Object;
                             newElement.EndPosition = pos = GetObject(pos, currentPath, false);
                             newElement.ValueType = JsonValueType.Object;
-
                             if (SaveComplexValues)
                             {
                                 newElement.Value = _jsonText.Substring(newElement.StartPosition,
@@ -533,7 +433,6 @@ namespace JsonPathParserLib
                             newElement.JsonPropertyType = JsonPropertyType.Array;
                             newElement.EndPosition = pos = GetArray(pos, currentPath);
                             newElement.ValueType = JsonValueType.Array;
-
                             if (SaveComplexValues)
                             {
                                 newElement.Value = _jsonText.Substring(newElement.StartPosition,
@@ -550,27 +449,25 @@ namespace JsonPathParserLib
                             var newValue = _jsonText
                                 .Substring(valueStartPosition, pos - valueStartPosition + 1)
                                 .Trim();
+
                             newElement.ValueType = GetVariableType(newValue);
                             newElement.Value = newElement.ValueType == JsonValueType.String
                                 ? newValue.Trim('\"')
                                 : newValue;
+
                             return pos;
                     }
                 }
                 else if (_endOfLineChars.Contains(currentChar)) // check restricted chars
-                {
-                    _errorFound = true;
-                    return pos;
-                }
+                    break;
             }
 
-            _errorFound = true;
-            return pos;
+            throw new Exception("Can't find end of property name till the end of the file.");
         }
 
         private int GetPropertyDivider(int pos, string currentPath)
         {
-            for (; pos < _jsonText.Length; pos++)
+            for (; pos < _jsonText.Length; pos = IncrementPosition(pos))
             {
                 switch (_jsonText[pos])
                 {
@@ -582,52 +479,37 @@ namespace JsonPathParserLib
                         pos = GetComment(pos, currentPath);
                         break;
                     default:
-                        if (!_allowedSpacerChars.Contains(_jsonText[pos]))
-                        {
-                            _errorFound = true;
-                            return pos;
-                        }
+                        if (!char.IsWhiteSpace(_jsonText[pos]))
+                            throw new Exception($"Incorrect character '{_jsonText[pos]}' at position {pos}. Not a white-space.");
 
                         break;
                 }
             }
 
-            _errorFound = true;
-            return pos;
+            throw new Exception("Can't find property divider till the end of the file.");
         }
 
         private int GetPropertyValue(int pos, string currentPath, ref int propertyStartPos)
         {
-            for (; pos < _jsonText.Length; pos++)
+            for (; pos < _jsonText.Length; pos = IncrementPosition(pos))
             {
                 switch (_jsonText[pos])
                 {
-                    // it's a start of array
-                    case '[':
-                    // or object
-                    case '{':
+                    case '[': // it's a start of array                   
+                    case '{': // or object
                         return pos;
-                    case '/':
-                        //it's a comment
+                    case '/': //it's a comment                       
                         pos = GetComment(pos, currentPath);
                         propertyStartPos = pos + 1;
                         break;
-                    //it's a start of value string 
-                    case '\"':
+                    case '\"': //it's a start of value string 
                         {
-                            pos++;
-
-                            for (; pos < _jsonText.Length; pos++)
+                            pos = IncrementPosition(pos);
+                            for (; pos < _jsonText.Length; pos = IncrementPosition(pos))
                             {
                                 if (_jsonText[pos] == '\\') //skip escape chars
                                 {
-                                    pos++;
-                                    if (pos >= _jsonText.Length)
-                                    {
-                                        _errorFound = true;
-                                        return pos;
-                                    }
-
+                                    pos = IncrementPosition(pos);
                                     if (_escapeChars.Contains(_jsonText[pos]))
                                     {
                                         if (_jsonText[pos] == 'u') // if \u0000
@@ -636,46 +518,30 @@ namespace JsonPathParserLib
                                         continue;
                                     }
                                     else
-                                    {
-                                        _errorFound = true;
-                                        return pos;
-                                    }
+                                        break;
                                 }
                                 else if (_jsonText[pos] == '\"')
-                                {
                                     return pos;
-                                }
                                 else if (_endOfLineChars.Contains(_jsonText[pos])) // check restricted chars
-                                {
-                                    _errorFound = true;
-                                    return pos;
-                                }
+                                    break;
                             }
 
-                            _errorFound = true;
-                            return pos;
+                            throw new Exception("Can't find end of element till the end of the file.");
                         }
                     default:
-                        if (!_allowedSpacerChars.Contains(_jsonText[pos])) // it's a literal property value
+                        if (!char.IsWhiteSpace(_jsonText[pos])) // it's a literal property value
                         {
-                            // ???? check this
-                            // var endingChars = new[] { ',', ' ', '\t', '\r', '\n' };
-                            var endingChars = new[] { ',', ']', '}', ' ', '\t', '\r', '\n', '/' };
-                            for (; pos < _jsonText.Length; pos++)
+                            for (; pos < _jsonText.Length; pos = IncrementPosition(pos))
                             {
-                                // value end found
-                                if (endingChars.Contains(_jsonText[pos]))
+                                if (_endingChars.Contains(_jsonText[pos])) // value end found
                                 {
                                     pos--;
+
                                     return pos;
                                 }
 
-                                // non-allowed char found
                                 if (!_keywordOrNumberChars.Contains(_jsonText[pos])) // check restricted chars
-                                {
-                                    _errorFound = true;
-                                    return pos;
-                                }
+                                    throw new Exception($"Incorrect character '{_jsonText[pos]}' at position {pos}. Not a keyword or number.");
                             }
                         }
 
@@ -683,20 +549,16 @@ namespace JsonPathParserLib
                 }
             }
 
-            _errorFound = true;
-            return pos;
+            throw new Exception("Can't find end of property value till the end of the file.");
         }
 
         private int GetArray(int pos, string currentPath)
         {
-            pos++;
+            pos = IncrementPosition(pos);
             var arrayIndex = 0;
-            for (; pos < _jsonText.Length; pos++)
+            for (; pos < _jsonText.Length; pos = IncrementPosition(pos))
             {
                 pos = FindStartOfNextToken(pos, out var foundObjectType);
-                if (_errorFound)
-                    return pos;
-
                 switch (foundObjectType)
                 {
                     case JsonPropertyType.Comment:
@@ -720,20 +582,15 @@ namespace JsonPathParserLib
                         break;
                     case JsonPropertyType.EndOfArray:
                         if (_searchMode && currentPath == _searchPath)
-                            _errorFound = true;
+                            throw new Exception("Search finished");
+
                         return pos;
                     default:
-                        _errorFound = true;
-                        return pos;
+                        throw new Exception($"Incorrect element at position {pos}.");
                 }
-
-                if (_errorFound)
-                    return pos;
             }
 
-            _errorFound = true;
-
-            return pos;
+            throw new Exception("Can't find end of array till the end of the file.");
         }
 
         private int GetObject(int pos, string currentPath, bool save = true)
@@ -743,22 +600,18 @@ namespace JsonPathParserLib
                 var lastItem = _properties?.LastOrDefault();
                 if (lastItem?.Path == _searchPath)
                 {
-                    if (SearchStartOnly
-                        || (lastItem?.JsonPropertyType != JsonPropertyType.Array
-                            && lastItem?.JsonPropertyType != JsonPropertyType.Object))
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
+                    if (SearchStartOnly)
+                        throw new Exception($"Search finished");
+
+                    if (lastItem?.JsonPropertyType != JsonPropertyType.Array
+                        && lastItem?.JsonPropertyType != JsonPropertyType.Object)
+                        throw new Exception("Search finished");
                 }
                 else
-                {
                     _properties?.Remove(_properties.LastOrDefault());
-                }
             }
 
             var newElement = new ParsedProperty(JsonPathDivider);
-
             if (save)
             {
                 newElement.StartPosition = pos;
@@ -768,14 +621,10 @@ namespace JsonPathParserLib
                 _properties?.Add(newElement);
             }
 
-            pos++;
-
-            for (; pos < _jsonText.Length; pos++)
+            pos = IncrementPosition(pos);
+            for (; pos < _jsonText.Length; pos = IncrementPosition(pos))
             {
                 pos = FindStartOfNextToken(pos, out var foundObjectType);
-                if (_errorFound)
-                    return pos;
-
                 switch (foundObjectType)
                 {
                     case JsonPropertyType.Comment:
@@ -804,23 +653,16 @@ namespace JsonPathParserLib
                             }
 
                             if (_searchMode && currentPath == _searchPath)
-                            {
-                                _errorFound = true;
-                                return pos;
-                            }
+                                throw new Exception("Search finished");
                         }
 
                         return pos;
                     default:
-                        _errorFound = true;
-                        return pos;
+                        throw new Exception($"Incorrect element at position {pos}.");
                 }
-
-                if (_errorFound)
-                    return pos;
             }
 
-            _errorFound = true;
+            throw new Exception("Can't find end of object till the end of the file.");
 
             return pos;
         }
@@ -832,33 +674,27 @@ namespace JsonPathParserLib
                 var lastItem = _properties?.LastOrDefault();
                 if (lastItem?.Path == _searchPath)
                 {
-                    if (SearchStartOnly
-                        || (lastItem?.JsonPropertyType != JsonPropertyType.Array
-                            && lastItem?.JsonPropertyType != JsonPropertyType.Object))
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
+                    if (SearchStartOnly)
+                        throw new Exception("Search finished");
+
+                    if (lastItem?.JsonPropertyType != JsonPropertyType.Array
+                        && lastItem?.JsonPropertyType != JsonPropertyType.Object)
+                        throw new Exception("Search finished.");
                 }
                 else
-                {
                     _properties?.Remove(_properties.LastOrDefault());
-                }
             }
 
             var newElement = new ParsedProperty(JsonPathDivider)
             {
                 StartPosition = pos
             };
+
             _properties?.Add(newElement);
-
-            var endingChars = new[] { ',', '}', ']', '\r', '\n', '/' };
-
-            for (; pos < _jsonText.Length; pos++) // searching for token end
+            for (; pos < _jsonText.Length; pos = IncrementPosition(pos)) // searching for token end
             {
                 var currentChar = _jsonText[pos];
-                // end of token found
-                if (endingChars.Contains(currentChar))
+                if (_endingChars.Contains(currentChar)) // end of token found
                 {
                     pos--;
                     var newValue = _jsonText
@@ -866,10 +702,7 @@ namespace JsonPathParserLib
                         .Trim();
 
                     if (!_keywords.Contains(newValue) && !IsNumeric(newValue))
-                    {
-                        _errorFound = true;
-                        return pos;
-                    }
+                        throw new Exception($"Invalid value (not key word or number): \"{newValue}\".");
 
                     newElement.Value = newValue;
                     newElement.JsonPropertyType = isArray ? JsonPropertyType.ArrayValue : JsonPropertyType.Property;
@@ -881,19 +714,96 @@ namespace JsonPathParserLib
                 }
 
                 if (!_keywordOrNumberChars.Contains(currentChar)) // check restricted chars
-                {
-                    _errorFound = true;
-                    return pos;
-                }
+                    throw new Exception($"Invalid character: '{currentChar}'.");
             }
 
-            _errorFound = true;
+            throw new Exception("Can't find end of element till the end of the file.");
+        }
+
+        private static JsonValueType GetVariableType(string str)
+        {
+            var type = JsonValueType.Unknown;
+            if (string.IsNullOrEmpty(str))
+            {
+                type = JsonValueType.Unknown;
+            }
+            else if (str.Length > 1 && str[0] == '\"' && str[str.Length - 1] == '\"')
+            {
+                type = JsonValueType.String;
+            }
+            else if (str == "null")
+            {
+                type = JsonValueType.Null;
+            }
+            else if (str == "true" || str == "false")
+            {
+                type = JsonValueType.Boolean;
+            }
+            else if (IsNumeric(str))
+            {
+                type = str.Contains('.') ? JsonValueType.Number : JsonValueType.Integer;
+            }
+
+            return type;
+        }
+
+        // increment current position and check if the end-of-file reached
+        private int IncrementPosition(int pos)
+        {
+            if (pos > _jsonText.Length)
+                throw new Exception("End of file happened.");
+
+            pos++;
+
             return pos;
         }
 
         private static bool IsNumeric(string str)
         {
             return double.TryParse(str, out var _);
+        }
+
+        private static string TrimObjectValue(string objectText)
+        {
+            return TrimBracketedValue(objectText, '{', '}');
+        }
+
+        private static string TrimArrayValue(string arrayText)
+        {
+            return TrimBracketedValue(arrayText, '[', ']');
+        }
+
+        private static string TrimBracketedValue(string text, char startChar, char endChar)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            var startPosition = text.IndexOf(startChar);
+            var endPosition = text.LastIndexOf(endChar);
+            if (startPosition < 0 || endPosition <= 0 || endPosition <= startPosition)
+                return text;
+
+            if (endPosition - startPosition <= 1)
+                return string.Empty;
+
+            return text.Substring(startPosition + 1, endPosition - startPosition - 1).Trim();
+        }
+
+        // reorder comments to place them inside certain properties
+        private static void ReArrangeComments(IEnumerable<ParsedProperty> schemaProperties)
+        {
+            var commentCount = 0;
+            foreach (var comment in schemaProperties.Where(n => n.JsonPropertyType == JsonPropertyType.Comment))
+            {
+                var prop = schemaProperties
+                    .Where(n => n.JsonPropertyType != JsonPropertyType.Comment
+                    && n.StartPosition <= comment.StartPosition
+                    && n.EndPosition >= comment.EndPosition)?
+                    .LastOrDefault();
+
+                comment.Path = prop?.Path + prop?.PathDivider + $"%Comment{commentCount}%";
+                commentCount++;
+            }
         }
     }
 }

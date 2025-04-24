@@ -4,12 +4,11 @@
     {
         public int StartPosition = -1;
         public int EndPosition = -1;
-        public string Name = "";
-        public string Value = "";
+        public string Name = string.Empty;
+        public string Value = string.Empty;
         public JsonPropertyType JsonPropertyType = JsonPropertyType.Unknown;
         public JsonValueType ValueType;
         public char PathDivider { get; private set; }
-        private string _path = "";
 
         public string Path
         {
@@ -21,7 +20,7 @@
             }
         }
 
-        private string _parentPath;
+        private string _path = string.Empty;
 
         public ParsedProperty(char pathDivider = '.')
         {
@@ -38,6 +37,8 @@
                 return _parentPath;
             }
         }
+
+        private string _parentPath;
 
         public int RawLength
         {

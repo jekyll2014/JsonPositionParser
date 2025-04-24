@@ -52,6 +52,7 @@ namespace parserTest
             this.textBox_startLine = new System.Windows.Forms.TextBox();
             this.textBox_endLine = new System.Windows.Forms.TextBox();
             this.textBox_path = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.textBox_value = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -60,7 +61,7 @@ namespace parserTest
             this.button_dir = new System.Windows.Forms.Button();
             this.textBox = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            this.label10 = new System.Windows.Forms.Label();
+            this.textBox_errorMessage = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -113,6 +114,7 @@ namespace parserTest
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.AutoScroll = true;
+            this.splitContainer1.Panel2.Controls.Add(this.textBox_errorMessage);
             this.splitContainer1.Panel2.Controls.Add(this.textBox_depth);
             this.splitContainer1.Panel2.Controls.Add(this.tableLayoutPanel1);
             this.splitContainer1.Panel2.Controls.Add(this.button_open);
@@ -328,6 +330,16 @@ namespace parserTest
             this.textBox_path.Size = new System.Drawing.Size(359, 20);
             this.textBox_path.TabIndex = 5;
             // 
+            // label10
+            // 
+            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(445, 66);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(36, 13);
+            this.label10.TabIndex = 4;
+            this.label10.Text = "Depth";
+            // 
             // label7
             // 
             this.label7.AutoSize = true;
@@ -395,18 +407,17 @@ namespace parserTest
             this.textBox.Name = "textBox";
             this.textBox.ReadOnly = true;
             this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBox.Size = new System.Drawing.Size(567, 311);
+            this.textBox.Size = new System.Drawing.Size(567, 282);
             this.textBox.TabIndex = 0;
             // 
-            // label10
+            // textBox_errorMessage
             // 
-            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(445, 66);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(36, 13);
-            this.label10.TabIndex = 4;
-            this.label10.Text = "Depth";
+            this.textBox_errorMessage.Enabled = false;
+            this.textBox_errorMessage.Location = new System.Drawing.Point(3, 440);
+            this.textBox_errorMessage.Name = "textBox_errorMessage";
+            this.textBox_errorMessage.ReadOnly = true;
+            this.textBox_errorMessage.Size = new System.Drawing.Size(567, 20);
+            this.textBox_errorMessage.TabIndex = 16;
             // 
             // Form1
             // 
@@ -465,6 +476,7 @@ namespace parserTest
         private System.Windows.Forms.TextBox textBox_endLine;
         private System.Windows.Forms.TextBox textBox_depth;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.TextBox textBox_errorMessage;
     }
 }
 
