@@ -15,7 +15,7 @@ namespace parserTest
         private const string RootName = "<root>";
         private char _pathDivider = '.';
         private JsonPathParser _parser;
-        private readonly string logFileName = "_bad_file.txt";
+        private const string LogFileName = "_bad_file.txt";
 
         public Form1()
         {
@@ -41,11 +41,7 @@ namespace parserTest
             var jsonText = File.ReadAllText(openFileDialog.FileName);
             textBox.Text = jsonText;
             Text = openFileDialog.FileName;
-            var pos = -1;
-            var errorFound = string.Empty;
             _pathDivider = treeView1.PathSeparator.FirstOrDefault();
-            ParsedProperty[] pathList = null;
-
             _parser = new JsonPathParser
             {
                 JsonPathDivider = _pathDivider,
@@ -55,20 +51,28 @@ namespace parserTest
                 KeepComments = true,
             };
 
+            var pos = -1;
+            var errorFound = string.Empty;
+            var pathList = new List<ParsedProperty>();
             try
             {
-                pathList = _parser.ParseJsonToPathList(jsonText, out pos, out errorFound).ToArray();
+                pathList = _parser.ParseJsonToPathList(jsonText);
+            }
+            catch (ParseException ex)
+            {
+                pos = ex.Position;
+                errorFound = $"Exception parsing file: {openFileDialog.FileName} at position {pos}:  {ex.Message}";
+                pathList = ex.PathList;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Exception: " + ex);
+                MessageBox.Show($"Exception: {ex}");
             }
 
             if (!string.IsNullOrEmpty(errorFound))
             {
-                var message = $"Error parsing file at position {pos}: {errorFound}";
-                textBox_errorMessage.Text = message;
-                MessageBox.Show(message);
+                textBox_errorMessage.Text = errorFound;
+                MessageBox.Show(errorFound);
                 textBox.SelectionStart = pos;
                 textBox.SelectionLength = textBox.Text.Length - pos + 1;
                 textBox.ScrollToCaret();
@@ -112,10 +116,6 @@ namespace parserTest
                     errors.Add((file, "&nbsp char in the file"));
                 }
 
-                var pos = -1;
-                var errorFound = string.Empty;
-                ParsedProperty[] pathList = null;
-
                 var parser = new JsonPathParser
                 {
                     JsonPathDivider = _pathDivider,
@@ -125,20 +125,29 @@ namespace parserTest
                     KeepComments = true,
                 };
 
+                var errorFound = string.Empty;
+                var pathList = Array.Empty<ParsedProperty>();
                 try
                 {
-                    pathList = parser.ParseJsonToPathList(text, out pos, out errorFound).ToArray();
+                    pathList = parser.ParseJsonToPathList(text).ToArray();
+                }
+                catch (ParseException ex)
+                {
+                    var pos = ex.Position;
+                    errorFound = $"Exception parsing file: {file} at position {pos}:  {ex.Message}";
+                    errors.Add((file, errorFound));
                 }
                 catch (Exception ex)
                 {
-                    errors.Add((file, $"Exception parsing file: {file} at position {pos}:  {ex.Message}"));
+                    errorFound = $"Exception parsing file: {file}:  {ex.Message}";
+                    errors.Add((file, errorFound));
                 }
 
                 // parsing failed
                 if (!string.IsNullOrEmpty(errorFound))
-                    errors.Add((file, $"Error parsing file at position {pos}: {errorFound}"));
+                    errors.Add((file, errorFound));
 
-                if (pathList == null)
+                if (pathList.Length <= 0)
                     continue;
 
                 // not failed but have incorrect positions
@@ -166,8 +175,8 @@ namespace parserTest
 
             if (!string.IsNullOrEmpty(errorMessages))
             {
-                File.AppendAllText(logFileName, errorMessages);
-                MessageBox.Show($"Errors found: {errors.Count}\r\nSee log in the \"{logFileName}\"");
+                File.AppendAllText(LogFileName, errorMessages);
+                MessageBox.Show($"Errors found: {errors.Count}\r\nSee log in the \"{LogFileName}\"");
             }
         }
 
@@ -247,9 +256,7 @@ namespace parserTest
                 return Array.Empty<TreeNode>();
 
             pathList = _parser.ConvertForTreeProcessing(pathList);
-
             var node = new TreeNode("?");
-
             foreach (var propertyItem in pathList)
             {
                 var itemPath = propertyItem.Path;
@@ -259,7 +266,6 @@ namespace parserTest
                 {
                     var nodeName = token;
                     tmpPath.Append(token + _pathDivider);
-
                     if (propertyItem.JsonPropertyType == JsonPropertyType.Array)
                         nodeName += "[]";
                     else if (propertyItem.JsonPropertyType == JsonPropertyType.Object)
