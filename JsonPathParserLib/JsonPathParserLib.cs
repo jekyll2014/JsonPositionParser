@@ -17,6 +17,7 @@ namespace JsonPathParserLib
         // Keep comments as properties
         public bool KeepComments { get; set; } = false;
 
+        private const string CommentNameTemplate = "%Comment{0}%";
         private static readonly char[] EscapeChars = new char[] { '\"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u' };
         private static readonly char[] EndOfLineChars = new char[] { '\r', '\n' };
         private static readonly char[] EndingChars = new char[] { ' ', ',', '}', ']', '\t', '\r', '\n', '/' };
@@ -186,7 +187,8 @@ namespace JsonPathParserLib
                         case JsonPropertyType.EndOfArray:
                             break;
                         default:
-                            throw new ParseException($"Invalid object found: {foundObjectType}.", endPosition, _properties);
+                            throw new ParseException($"Invalid object found: {foundObjectType}.", endPosition,
+                                _properties);
                     }
 
                     endPosition++;
@@ -200,9 +202,11 @@ namespace JsonPathParserLib
             {
                 throw new ParseException(ex.Message, endPosition, _properties);
             }
-
-            if (KeepComments)
-                ReArrangeComments(_properties);
+            finally
+            {
+                if (KeepComments)
+                    ReArrangeComments(_properties);
+            }
 
             return _properties;
         }
@@ -784,18 +788,26 @@ namespace JsonPathParserLib
         }
 
         // reorder comments to place them inside certain properties
-        private static void ReArrangeComments(IEnumerable<ParsedProperty> schemaProperties)
+        private static void ReArrangeComments(List<ParsedProperty> schemaProperties)
         {
             var commentCount = 0;
-            foreach (var comment in schemaProperties.Where(n => n.JsonPropertyType == JsonPropertyType.Comment))
+            var nonComments = schemaProperties
+                .Where(n => n.JsonPropertyType != JsonPropertyType.Comment)
+                .ToArray();
+            foreach (var comment in schemaProperties
+                         .Where(n => n.JsonPropertyType == JsonPropertyType.Comment))
             {
-                var prop = schemaProperties
-                    .Where(n => n.JsonPropertyType != JsonPropertyType.Comment
-                    && n.StartPosition <= comment.StartPosition
-                    && n.EndPosition >= comment.EndPosition)?
+                var prop = nonComments
+                    .Where(n => n.StartPosition <= comment.StartPosition
+                                 && n.EndPosition >= comment.EndPosition)?
                     .LastOrDefault();
 
-                comment.Path = prop?.Path + prop?.PathDivider + $"%Comment{commentCount}%";
+                var name = string.Format(CommentNameTemplate, commentCount);
+                comment.Name = name;
+                if (prop != null)
+                    comment.Path = prop.Path + comment.PathDivider + name;
+                else
+                    comment.Path += comment.PathDivider + name;
                 commentCount++;
             }
         }

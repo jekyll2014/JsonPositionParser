@@ -61,7 +61,7 @@ namespace parserTest
             catch (ParseException ex)
             {
                 pos = ex.Position;
-                errorFound = $"Exception parsing file: {openFileDialog.FileName} at position {pos}:  {ex.Message}";
+                errorFound = $"Exception parsing file {openFileDialog.FileName}:  {ex.Message}";
                 pathList = ex.PathList;
             }
             catch (Exception ex)
@@ -81,8 +81,7 @@ namespace parserTest
 
             listBox1.DataSource = pathList;
             var rootNodes = ConvertPathListToTree(pathList);
-            if (rootNodes != null)
-                treeView1.Nodes.AddRange(rootNodes);
+            treeView1.Nodes.AddRange(rootNodes);
         }
 
         private void Button_dir_Click(object sender, EventArgs e)
@@ -133,13 +132,12 @@ namespace parserTest
                 }
                 catch (ParseException ex)
                 {
-                    var pos = ex.Position;
-                    errorFound = $"Exception parsing file: {file} at position {pos}:  {ex.Message}";
+                    errorFound = $"Exception parsing file {file}: {ex.Message}";
                     errors.Add((file, errorFound));
                 }
                 catch (Exception ex)
                 {
-                    errorFound = $"Exception parsing file: {file}:  {ex.Message}";
+                    errorFound = $"Exception parsing file {file}: {ex.Message}";
                     errors.Add((file, errorFound));
                 }
 
@@ -260,59 +258,33 @@ namespace parserTest
             foreach (var propertyItem in pathList)
             {
                 var itemPath = propertyItem.Path;
-                var tmpNode = node?.LastNode;
                 var tmpPath = new StringBuilder();
+                var nodeName = string.Empty;
                 foreach (var token in itemPath.Split(_pathDivider))
                 {
-                    var nodeName = token;
+                    nodeName = token;
                     tmpPath.Append(token + _pathDivider);
                     if (propertyItem.JsonPropertyType == JsonPropertyType.Array)
                         nodeName += "[]";
                     else if (propertyItem.JsonPropertyType == JsonPropertyType.Object)
                         nodeName += "{}";
-
-                    if (tmpNode == null)
-                    {
-                        var newNode = new TreeNode(nodeName)
-                        {
-                            Tag = propertyItem,
-                            Name = tmpPath.ToString()
-                        };
-                        node.Nodes.Add(newNode);
-                        continue;
-                    }
-
-                    if (tmpPath.ToString() == RootName + _pathDivider && itemPath != RootName)
-                        continue;
-
-                    if (itemPath == RootName)
-                    {
-                        var newNode = new TreeNode(nodeName)
-                        {
-                            Tag = propertyItem,
-                            Name = tmpPath.ToString()
-                        };
-
-                        node.Nodes.Add(newNode);
-                    }
-                    else if (!tmpNode.Nodes.ContainsKey(tmpPath.ToString()))
-                    {
-                        var newNode = new TreeNode(nodeName)
-                        {
-                            Tag = propertyItem,
-                            Name = tmpPath.ToString()
-                        };
-
-                        tmpNode.Nodes.Add(newNode);
-                    }
-                    else
-                    {
-                        tmpNode = tmpNode.Nodes[tmpPath.ToString()];
-                    }
                 }
+
+                var existingNode = node.Nodes.Find(propertyItem.ParentPath, true).FirstOrDefault();
+                var newNode = new TreeNode(nodeName)
+                {
+                    Tag = propertyItem,
+                    Name = itemPath,
+                    Text = nodeName,
+                };
+
+                if (existingNode == null)
+                    node.Nodes.Add(newNode);
+                else
+                    existingNode.Nodes.Add(newNode);
             }
 
-            return node?.Nodes.OfType<TreeNode>().ToArray();
+            return node.Nodes.OfType<TreeNode>().ToArray();
         }
     }
 }

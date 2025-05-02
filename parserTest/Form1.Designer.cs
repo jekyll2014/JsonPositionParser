@@ -37,6 +37,7 @@ namespace parserTest
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.textBox_errorMessage = new System.Windows.Forms.TextBox();
             this.textBox_depth = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.textBox_startPos = new System.Windows.Forms.TextBox();
@@ -61,7 +62,6 @@ namespace parserTest
             this.button_dir = new System.Windows.Forms.Button();
             this.textBox = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            this.textBox_errorMessage = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -157,6 +157,7 @@ namespace parserTest
             // treeView1
             // 
             this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeView1.HideSelection = false;
             this.treeView1.Location = new System.Drawing.Point(3, 3);
             this.treeView1.Name = "treeView1";
             this.treeView1.Size = new System.Drawing.Size(271, 431);
@@ -173,6 +174,15 @@ namespace parserTest
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "List";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // textBox_errorMessage
+            // 
+            this.textBox_errorMessage.Enabled = false;
+            this.textBox_errorMessage.Location = new System.Drawing.Point(3, 440);
+            this.textBox_errorMessage.Name = "textBox_errorMessage";
+            this.textBox_errorMessage.ReadOnly = true;
+            this.textBox_errorMessage.Size = new System.Drawing.Size(567, 20);
+            this.textBox_errorMessage.TabIndex = 16;
             // 
             // textBox_depth
             // 
@@ -409,15 +419,6 @@ namespace parserTest
             this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.textBox.Size = new System.Drawing.Size(567, 282);
             this.textBox.TabIndex = 0;
-            // 
-            // textBox_errorMessage
-            // 
-            this.textBox_errorMessage.Enabled = false;
-            this.textBox_errorMessage.Location = new System.Drawing.Point(3, 440);
-            this.textBox_errorMessage.Name = "textBox_errorMessage";
-            this.textBox_errorMessage.ReadOnly = true;
-            this.textBox_errorMessage.Size = new System.Drawing.Size(567, 20);
-            this.textBox_errorMessage.TabIndex = 16;
             // 
             // Form1
             // 

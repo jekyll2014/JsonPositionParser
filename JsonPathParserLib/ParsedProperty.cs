@@ -15,30 +15,15 @@
             get => _path;
             set
             {
-                _parentPath = string.Empty;
+                _parentPath = null;
                 _path = value;
             }
         }
 
         private string _path = string.Empty;
 
-        public ParsedProperty(char pathDivider = '.')
-        {
-            PathDivider = pathDivider;
-        }
-
-        public string ParentPath
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_parentPath))
-                    _parentPath = TrimPathEnd(Path, 1, PathDivider);
-
-                return _parentPath;
-            }
-        }
-
-        private string _parentPath;
+        public string ParentPath => _parentPath ?? (_parentPath = TrimPathEnd(Path, 1, PathDivider));
+        private string _parentPath = null;
 
         public int RawLength
         {
@@ -62,15 +47,20 @@
             }
         }
 
+        public ParsedProperty(char pathDivider = '.')
+        {
+            PathDivider = pathDivider;
+        }
+
         private static string TrimPathEnd(string originalPath, int levels, char pathDivider)
         {
             for (; levels > 0; levels--)
             {
                 var pos = originalPath.LastIndexOf(pathDivider);
-                if (pos >= 0)
+                if (pos > 0)
                     originalPath = originalPath.Substring(0, pos);
                 else
-                    break;
+                    return "";
             }
 
             return originalPath;
